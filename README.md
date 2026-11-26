@@ -19,6 +19,7 @@ On iPhone, open the link in Safari and turn the phone sideways. For full screen,
 | Attack  | J or X           | ATK         |
 | Skill 1 | K or C           | S1          |
 | Skill 2 | L or V           | S2          |
+| SUPER   | U or Shift       | SUPER       |
 | Pause   | Esc / P          | II          |
 
 The whole game is one file, `index.html`, with no build step.
