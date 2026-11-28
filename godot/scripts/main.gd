@@ -32,6 +32,8 @@ var respawn := Vector2.ZERO
 var finished := false
 var demo := false
 var hero_i := 3
+var touch_on := false
+static var picked := -1
 var _demo_t := 0.0
 
 func _ready() -> void:
@@ -40,6 +42,14 @@ func _ready() -> void:
 			demo = true
 		elif a.begins_with("hero="):
 			hero_i = clampi(int(a.substr(5)), 0, 7)
+		elif a == "touch":
+			touch_on = true
+		elif a == "touchtest":
+			call_deferred("_add_touch_test")
+	if picked >= 0:
+		hero_i = picked
+	if DisplayServer.is_touchscreen_available() or OS.has_feature("mobile") or OS.has_feature("web_android") or OS.has_feature("web_ios"):
+		touch_on = true
 	_inputs()
 	level = Level.new()
 	level.build(Data.LEVELS[0])
@@ -96,6 +106,15 @@ func _ready() -> void:
 	layer.layer = 10
 	add_child(layer)
 	layer.add_child(hud)
+	if touch_on:
+		var tl := CanvasLayer.new()
+		tl.layer = 11
+		tl.process_mode = Node.PROCESS_MODE_ALWAYS
+		add_child(tl)
+		var tc := preload("res://scripts/touch.gd").new()
+		tc.main = self
+		tl.add_child(tc)
+		hud.touch = true
 
 func _inputs() -> void:
 	var map := {
@@ -109,6 +128,16 @@ func _inputs() -> void:
 			var e := InputEventKey.new()
 			e.physical_keycode = k
 			InputMap.action_add_event(action, e)
+
+func _add_touch_test() -> void:
+	var tt = load("res://tests/touch_test.gd").new()
+	tt.main = self
+	add_child(tt)
+
+func next_hero() -> void:
+	picked = (hero_i + 1) % Data.HEROES.size()
+	get_tree().paused = false
+	get_tree().reload_current_scene()
 
 func _spawn_foe(pos: Vector2) -> void:
 	var f := Fighter.new()
@@ -360,6 +389,7 @@ func on_swing(_f) -> void:
 # ---------------- HUD ----------------
 class Hud extends Control:
 	var main
+	var touch := false
 	var banner_text := ""
 	var banner_t := 0.0
 	var font: Font
@@ -393,12 +423,14 @@ class Hud extends Control:
 		_bar(Rect2(30, 58, 330, 18), p.hp / p.max_hp, Color("ff8a9a"), Color("d8283a"))
 		_text("%d / %d" % [int(p.hp), int(p.max_hp)], Vector2(30, 74), 15, Color.WHITE, HORIZONTAL_ALIGNMENT_RIGHT, 326)
 		_bar(Rect2(30, 82, 330, 12), p.mp / 100.0, Color("9ad8ff"), Color("2a78d8"))
-		draw_rect(Rect2(vw - 210, 16, 194, 50), Color(0.05, 0.04, 0.1, 0.72))
-		draw_circle(Vector2(vw - 186, 41), 13, Color("1b1430"))
-		draw_circle(Vector2(vw - 186, 41), 10.5, Color("ffc93a"))
-		draw_rect(Rect2(vw - 187.5, 34, 3, 14), Color("b0640a"))
-		_text(str(main.coins_n), Vector2(vw - 164, 51), 28, Color("ffe27a"))
-		_text("freed " + str(main.freed), Vector2(vw - 100, 51), 18, Color("e8e0ff"))
+		if touch:
+			_text("tap here to switch hero", Vector2(30, 128), 15, Color(1, 1, 1, 0.75))
+		draw_rect(Rect2(vw - 210 - (70 if touch else 0), 16, 194, 50), Color(0.05, 0.04, 0.1, 0.72))
+		draw_circle(Vector2(vw - 186 - (70 if touch else 0), 41), 13, Color("1b1430"))
+		draw_circle(Vector2(vw - 186 - (70 if touch else 0), 41), 10.5, Color("ffc93a"))
+		draw_rect(Rect2(vw - 187.5 - (70 if touch else 0), 34, 3, 14), Color("b0640a"))
+		_text(str(main.coins_n), Vector2(vw - 164 - (70 if touch else 0), 51), 28, Color("ffe27a"))
+		_text("freed " + str(main.freed), Vector2(vw - 100 - (70 if touch else 0), 51), 18, Color("e8e0ff"))
 		var lw: float = main.level.width_px
 		var prog := clampf(p.position.x / maxf(1.0, lw - 60.0), 0, 1)
 		var bx := vw * 0.5 - 180
@@ -408,7 +440,7 @@ class Hud extends Control:
 		draw_circle(Vector2(bx + 360 * prog, 51), 8, Color(String(p.def.look.shirt)))
 		if main.combo >= 2:
 			var k := 1.0 + clampf(main.combo_t - 2.2, 0, 0.2) * 1.5
-			draw_set_transform(Vector2(vw - 120, 150), -0.08, Vector2(k, k))
+			draw_set_transform(Vector2(vw - 120 - (70 if touch else 0), 190), -0.08, Vector2(k, k))
 			_text(str(main.combo), Vector2(-80, 0), 64, Color("ffe27a"), HORIZONTAL_ALIGNMENT_CENTER, 160)
 			_text("HITS", Vector2(-80, 30), 22, Color.WHITE, HORIZONTAL_ALIGNMENT_CENTER, 160)
 			draw_set_transform(Vector2.ZERO)

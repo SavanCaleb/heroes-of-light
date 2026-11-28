@@ -9,22 +9,40 @@ static func build(main: Node2D, level_w: float) -> void:
 	sky_layer.layer = -10
 	main.add_child(sky_layer)
 	sky_layer.add_child(SkyArt.new())
-	_parallax(main, 0.06, Vector2(-14, 0), 2600, Clouds.new(), -9)
-	_parallax(main, 0.18, Vector2.ZERO, 2048, Hills.make(455, 46, 3, Color("9ad8a0"), 0.55, 11, false), -8)
-	_parallax(main, 0.38, Vector2.ZERO, 2048, Hills.make(545, 40, 4, Color("62b45c"), 0.9, 23, true), -7)
-	var fg := _parallax(main, 1.22, Vector2.ZERO, 1800, Bushes.new(), 20)
+	_parallax(main, 0.06, -14.0, 2600, func(): return Clouds.new(), -9, level_w)
+	_parallax(main, 0.18, 0.0, 2048, func(): return Hills.make(455, 46, 3, Color("9ad8a0"), 0.55, 11, false), -8, level_w)
+	_parallax(main, 0.38, 0.0, 2048, func(): return Hills.make(545, 40, 4, Color("62b45c"), 0.9, 23, true), -7, level_w)
+	var fg := _parallax(main, 1.22, 0.0, 1800, func(): return Bushes.new(), 20, level_w)
 	fg.modulate = Color(1, 1, 1, 0.96)
 
-static func _parallax(main: Node2D, s: float, auto: Vector2, period: float, child: Node2D, z: int) -> Parallax2D:
-	var p := Parallax2D.new()
-	p.scroll_scale = Vector2(s, 1)
-	p.repeat_size = Vector2(period, 0)
-	p.repeat_times = 4
-	p.autoscroll = auto
+## A background layer that slides slower (or faster) than the camera.
+## Copies of the art are laid side by side so the whole land is covered.
+static func _parallax(main: Node2D, s: float, auto: float, period: float, make: Callable, z: int, level_w: float) -> Node2D:
+	var p := Para.new()
+	p.factor = s
+	p.auto = auto
+	p.period = period
 	p.z_index = z
-	p.add_child(child)
+	var copies := int(ceil((level_w * absf(s) + 3200.0) / period)) + 2
+	for i in copies:
+		var n: Node2D = make.call()
+		n.position.x = (i - 1) * period
+		p.add_child(n)
 	main.add_child(p)
 	return p
+
+class Para extends Node2D:
+	var factor := 0.5
+	var auto := 0.0
+	var period := 2048.0
+	var t := 0.0
+	func _process(d: float) -> void:
+		t += d
+		var cam := get_viewport().get_camera_2d()
+		if cam == null:
+			return
+		var left := cam.get_screen_center_position().x
+		position.x = left * (1.0 - factor) + fposmod(t * auto, period) - (period if auto != 0.0 else 0.0)
 
 static func glow(ci: CanvasItem, c: Vector2, r: float, col: Color, a: float) -> void:
 	ci.draw_texture_rect(Part.glow_tex(), Rect2(c - Vector2(r, r), Vector2(r, r) * 2), false, Color(col, a))

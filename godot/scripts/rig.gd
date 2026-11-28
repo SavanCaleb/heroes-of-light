@@ -167,6 +167,7 @@ func kick(amount: float) -> void:
 	squash_v += amount * 10.0
 
 func _process(delta: float) -> void:
+	delta = minf(delta, 1.0 / 30.0)   # a slow first frame must not blow up the springs
 	t += delta * 60.0
 	var tgt := _pose_target(pose)
 	var fast := pose in ["punch1", "punch2", "kick", "airkick", "hurt", "wind", "run"]
@@ -180,7 +181,8 @@ func _process(delta: float) -> void:
 			cur[key] = lerpf(cur.get(key, v), v, k)
 	# squash & stretch spring
 	squash_v += (-squash * 320.0 - squash_v * 16.0) * delta
-	squash += squash_v * delta
+	squash = clampf(squash + squash_v * delta, -0.35, 0.35)
+	squash_v = clampf(squash_v, -12.0, 12.0)
 	var sc: float = look.get("scale", 1.0)
 	var breathe := sin(t * 0.07) * 0.012 if pose == "idle" else 0.0
 	body.scale = Vector2(sc * (1.0 - squash * 0.5), sc * (1.0 + squash + breathe))
