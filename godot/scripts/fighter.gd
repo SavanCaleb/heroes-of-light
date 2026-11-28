@@ -135,7 +135,9 @@ func _physics_process(delta: float) -> void:
 		if int(armor_god * 20.0) % 3 == 0:
 			main.armor_sparkle(self)
 	# energy
-	var regen: float = 9.6 * (1.0 + (Game.own("oil") * 0.25 if kind == "hero" else 0.0))
+	var regen: float = 9.6 * float(def.get("mpr", 1.0)) * (1.0 + (Game.own("oil") * 0.25 if kind == "hero" else 0.0))
+	if def.has("regen") and hp < max_hp and not dead:
+		hp = minf(max_hp, hp + float(def.regen) * delta)
 	mp = minf(100.0, mp + regen * delta)
 	# dash (Steven's sprint and some skills)
 	if dash_t > 0.0:
@@ -306,6 +308,7 @@ func take_hit(dmg: float, dir: int, kb: float, up: float) -> bool:
 		velocity.x = dir * kb * 0.5 * U
 		main.on_block(self)
 		return false
+	dmg *= float(def.get("armor_def", 1.0))
 	if kind == "hero":
 		dmg *= 1.0 - Game.own("helmet") * 0.12
 		if armor_god > 0.0:

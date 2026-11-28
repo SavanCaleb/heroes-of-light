@@ -368,7 +368,9 @@ func _select(vs: Vector2) -> void:
 	UI.text(self, "Spirit Blade, Agent Dash, Armor of God" if h.id == "savan" else SKILL_NAME[Data.SKILL[h.id]], Vector2(pr.position.x + 30, y + 26), 19 if h.id == "savan" else 21, UI.CREAM)
 	UI.text(self, "SUPER", Vector2(pr.position.x + 30, y + 60), 17, Color("ffd25a"))
 	UI.text(self, h.sup, Vector2(pr.position.x + 30, y + 86), 21, UI.CREAM)
-	var stats := [["SPEED", 4], ["JUMP", 4], ["HP", 4], ["POWER", 4]]
+	var stats := [["SPEED", 5 if h.spd > 3.0 else 3], ["JUMP", 5 if h.jmp > 9.0 else 3], ["HP", 5 if h.hp > 120 else 3], ["POWER", 3]]
+	UI.text(self, "STRENGTH", Vector2(pr.position.x + 30, pr.end.y - 226), 17, Color("9ff0b0"))
+	UI.text(self, h.strength, Vector2(pr.position.x + 128, pr.end.y - 226), 18, UI.CREAM)
 	for i in stats.size():
 		var sy := pr.end.y - 190 + i * 30
 		UI.text(self, stats[i][0], Vector2(pr.position.x + 30, sy), 17, Color("c8b8e8"))

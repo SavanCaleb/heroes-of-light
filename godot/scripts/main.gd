@@ -800,7 +800,15 @@ func _skill(f, k: String) -> void:
 	Fx.burst(self, c, Color(1, 0.95, 0.7), 14, 300, 0.08)
 	match k:
 		"monkey":
-			_proj(f, "monkey", c + Vector2(fc * 20, -10), Vector2(fc * 560, -520), 11 * m, {grav=1700.0, bounce=true, pierce=true, life=2.6, r=20.0})
+			_proj(f, "monkey", c + Vector2(-fc * 14, -40), Vector2(fc * 560, -620), 11 * m, {grav=1700.0, bounce=true, pierce=true, life=2.6, r=24.0})
+			# Mango leaps off the backpack to attack, then climbs back on
+			if f.rig.parts.has("monkey"):
+				var mk = f.rig.parts.monkey
+				mk.visible = false
+				get_tree().create_timer(2.6).timeout.connect(func():
+					if is_instance_valid(mk):
+						mk.visible = true
+						Fx.burst(self, f.center() + Vector2(-f.face * 20, -40), Color(1, 0.9, 0.6), 8, 160, 0.06))
 		"swarm":
 			for i in 6:
 				_proj(f, "butterfly", c + Vector2(randf_range(-20, 20), randf_range(-30, 10)), Vector2(fc * randf_range(150, 350), randf_range(-300, -100)), 7 * m, {homing=true, life=3.2, col=[Color("4fd0ff"), Color("ff8ad8"), Color("ffd25a")][i % 3]})

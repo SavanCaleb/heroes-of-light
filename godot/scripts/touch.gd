@@ -58,7 +58,7 @@ func _which(p: Vector2) -> String:
 	return best
 
 func _input(event: InputEvent) -> void:
-	if main == null or main.mode == "results":
+	if main == null or main.mode in ["results", "dialog"]:
 		return
 	if event is InputEventScreenTouch:
 		if event.pressed:
@@ -120,7 +120,7 @@ func _glass(c: Vector2, r: float, tint: Color, down: bool, alpha := 1.0) -> void
 	draw_arc(c, r - 6, 0, TAU, 48, Color(tint, 0.55 * alpha), 2.0, true)
 
 func _draw() -> void:
-	if main == null or main.mode == "results":
+	if main == null or main.mode in ["results", "dialog"]:
 		return
 	if get_tree().paused:
 		var pb := _btn("pause")

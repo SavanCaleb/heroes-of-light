@@ -39,8 +39,6 @@ func setup(lk: Dictionary) -> void:
 		_add("aura", body, Vector2(0, -16 * K), -6)
 	elif Part.STICK:
 		_add("backglow", body, Vector2(0, -17 * K), -6)
-	if lk.get("monkey", false):
-		_add("monkey", body, Vector2(-13 * K, 0), -5)
 	hip = Node2D.new()
 	hip.position = Vector2(0, -11.2 * K)
 	body.add_child(hip)
@@ -56,6 +54,10 @@ func setup(lk: Dictionary) -> void:
 	torso = _add("torso", hip, Vector2.ZERO, 0)
 	if lk.has("pack"):
 		_add("pack", torso, Vector2.ZERO, -1)
+	if lk.get("monkey", false):
+		# Mango rides on Alisa's backpack and peeks over her shoulder
+		var mk = _add("monkey", torso, Vector2(-9.6 * K, -8.8 * K), -1)
+		mk.scale = Vector2(1.5, 1.5)
 	if lk.get("cape", false):
 		_add("cape", torso, Vector2.ZERO, -3)
 	head_pivot = Node2D.new()

@@ -170,7 +170,7 @@ class Proj extends Node2D:
 		var g := Part.glow_tex()
 		match kind:
 			"monkey":
-				draw_set_transform(Vector2.ZERO, sin(t * 20.0) * 0.4, Vector2(3, 3) * signf(vel.x if vel.x != 0 else 1.0))
+				draw_set_transform(Vector2.ZERO, sin(t * 20.0) * 0.4, Vector2(4.5, 4.5) * signf(vel.x if vel.x != 0 else 1.0))
 				draw_circle(Vector2(0, 0), 3.4, OL)
 				draw_circle(Vector2(0, 0), 2.8, Color("7a4a24"))
 				draw_circle(Vector2(0.8, -4.2), 3.0, OL)
