@@ -142,7 +142,7 @@ func _draw() -> void:
 	# --- boss bar ---
 	if main.boss and is_instance_valid(main.boss) and not main.boss.dead:
 		var b = main.boss
-		var name: String = b.name_text if "name_text" in b else "GIANT OF FEAR"
+		var name: String = b.name_text if "name_text" in b else "GOLIATH, THE GIANT OF FEAR"
 		UI.text_c(self, name, Vector2(vw / 2, vs.y - 64), 24, Color("ffb0b8"), 7)
 		_bar(Rect2(vw / 2 - 300, vs.y - 48, 600, 20), b.hp / b.max_hp, Color("ff8080"), Color("a01030"))
 	# --- wave label ---
@@ -279,8 +279,8 @@ func _results(vs: Vector2) -> void:
 		var on: bool = res.stars[i] and rt > at
 		var k := clampf((rt - at) * 6.0, 0, 1)
 		var sc := 1.0 + (1.0 - k) * 0.8 if on else 1.0
-		UI.star(self, Vector2(vs.x / 2 - 140 + i * 140, 230), 36 * sc, on)
-		UI.text_c(self, why[i], Vector2(vs.x / 2 - 140 + i * 140, 290), 17, UI.CREAM if res.stars[i] else Color("8a7aaa"), 4)
+		UI.star(self, Vector2(vs.x / 2 - 190 + i * 190, 230), 36 * sc, on)
+		UI.text_c(self, why[i], Vector2(vs.x / 2 - 190 + i * 190, 290), 17, UI.CREAM if res.stars[i] else Color("8a7aaa"), 4)
 	var rows := [["Coins found", str(res.coins)], ["Shadows freed", str(res.freed)], ["Best combo", str(res.combo) + " hits"], ["Star bonus", "+" + str(res.bonus) + " coins"]]
 	for i in rows.size():
 		if rt > 1.2 + i * 0.12:

@@ -253,7 +253,7 @@ func land_music() -> String:
 
 func boss_name() -> String:
 	match L.get("boss", ""):
-		"giant": return "Giant of Fear"
+		"giant": return "Goliath"
 		"serpent": return "Serpent of Lies"
 		"satan": return "Satan"
 	return ""
@@ -533,6 +533,8 @@ func _spawn_boss() -> void:
 			boss.setup(self, L.boss, lock.l, lock.l + vw)
 			add_child(boss)
 			foes.append(boss)
+	if "weakboss" in OS.get_cmdline_user_args():
+		boss.hp = 20.0
 	shake = 14.0
 	hud.banner(boss_name().to_upper(), "Boss battle!")
 	Game.music("boss")
@@ -989,6 +991,14 @@ func on_defeat(f) -> void:
 				f.dead = false
 				f.hp = f.max_hp * 0.6
 				f.rig.modulate.a = 1.0)
+		return
+	if f == boss:
+		# Goliath is a big fighter, so his defeat has to end the boss battle here
+		f.dead = true
+		freed += 1
+		var tw0 := create_tween()
+		tw0.tween_property(f, "modulate:a", 0.0, 1.6)
+		on_boss_down(f)
 		return
 	f.dead = true
 	freed += 1
