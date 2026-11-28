@@ -54,12 +54,17 @@ func setup(lk: Dictionary) -> void:
 	torso = _add("torso", hip, Vector2.ZERO, 0)
 	if lk.has("pack"):
 		_add("pack", torso, Vector2.ZERO, -1)
+	if lk.get("cape", false):
+		_add("cape", torso, Vector2.ZERO, -3)
 	head_pivot = Node2D.new()
 	head_pivot.position = Vector2(0, -9.6 * K)
 	torso.add_child(head_pivot)
 	_add("neck", head_pivot, Vector2.ZERO, -1)
 	head = _add("head", head_pivot, Vector2(0, -7.3 * K), 2)
 	backhair = _add("backhair", head, Vector2.ZERO, -5)
+	if lk.get("halo", false):
+		var h = _add("halo", head, Vector2(0, -10.5 * K * 1.16), 4)
+		h.use_parent_material = false
 	_arm("B", Vector2(-1.4 * K, -7.9 * K), Part.shade(top, -0.14), Part.shade(fore, -0.14), aw, covered, -4)
 	_arm("F", Vector2(1.2 * K, -7.9 * K), top, fore, aw, covered, 3)
 	_leg("F", Vector2(1.6 * K, 0), pants, 1)
@@ -155,6 +160,16 @@ func _pose_target(n: String) -> Dictionary:
 		"hurt": return {lean=-0.45, bob=0.0, lF=[0.35, 0.2], lB=[-0.25, -0.1], aF=[2.6, 2.9], aB=[-2.4, -2.8], tilt=-0.3}
 		"cast": return {lean=0.1, bob=0.0, lF=[0.35, 0.0], lB=[-0.35, 0.0], aF=[2.0, 1.7], aB=[1.8, 1.6], tilt=0.0}
 		"raise": return {lean=-0.1, bob=0.0, lF=[0.3, 0.0], lB=[-0.3, 0.0], aF=[3.0, 3.1], aB=[2.8, 3.0], tilt=-0.15}
+		"uppercut": return {lean=-0.25, bob=-1.0, lF=[0.7, 0.3], lB=[-0.5, 0.0], aF=[2.75, 3.05], aB=[-0.6, 0.4], tilt=-0.25}
+		"slam": return {lean=0.4, bob=0.0, lF=[1.2, 0.6], lB=[0.4, -0.6], aF=[0.6, 0.2], aB=[0.4, 0.1], tilt=0.25}
+		"block": return {lean=-0.05, bob=0.8, lF=[0.5, 0.1], lB=[-0.5, 0.0], aF=[1.25, 2.95], aB=[1.0, 2.75], tilt=0.12}
+		"dash": return {lean=0.6, bob=0.0, lF=[1.25, 0.4], lB=[-0.9, -1.5], aF=[1.57, 1.57], aB=[-1.2, -0.6], tilt=0.1}
+		"air1": return {lean=0.15, bob=0.0, lF=[0.8, 0.2], lB=[0.2, -0.4], aF=[1.6, 1.6], aB=[-0.6, 0.4], tilt=0.05}
+		"spin": return {lean=-0.35, bob=0.0, lF=[1.62, 1.62], lB=[-0.12, 0.0], aF=[-0.9, -0.2], aB=[1.2, 1.9], tilt=0.2}
+		"launch": return {lean=-0.8, bob=0.0, lF=[0.9, 0.4], lB=[0.3, -0.3], aF=[2.8, 3.0], aB=[-2.5, -2.9], tilt=-0.4}
+		"power":
+			var q := sin(t * 0.5) * 0.08
+			return {lean=-0.12, bob=-1.0, lF=[0.45, 0.1], lB=[-0.45, 0.0], aF=[2.4 + q, 2.9], aB=[-2.4 - q, -2.9], tilt=-0.2}
 		"cheer":
 			var k := absf(sin(t * 0.2))
 			return {lean=0.0, bob=-k * 3, lF=[0.2, 0.0], lB=[-0.2, 0.0], aF=[2.6 + k * 0.3, 2.9], aB=[-2.6 - k * 0.3, -2.9], tilt=-0.1}
@@ -170,7 +185,7 @@ func _process(delta: float) -> void:
 	delta = minf(delta, 1.0 / 30.0)   # a slow first frame must not blow up the springs
 	t += delta * 60.0
 	var tgt := _pose_target(pose)
-	var fast := pose in ["punch1", "punch2", "kick", "airkick", "hurt", "wind", "run"]
+	var fast := pose in ["punch1", "punch2", "kick", "airkick", "hurt", "wind", "run", "uppercut", "slam", "dash", "air1", "spin", "launch", "block"]
 	var k := 1.0 - exp(-delta * (30.0 if fast else 14.0))
 	for key in tgt:
 		var v = tgt[key]
@@ -198,7 +213,7 @@ func _process(delta: float) -> void:
 	if nb != blink:
 		blink = nb
 		head.queue_redraw()
-	var want_mouth := pose in ["punch1", "punch2", "kick", "airkick", "hurt", "cheer", "jump"]
+	var want_mouth := pose in ["punch1", "punch2", "kick", "airkick", "hurt", "cheer", "jump", "uppercut", "slam", "spin", "launch", "power"]
 	if want_mouth != mouth_open:
 		mouth_open = want_mouth
 		head.queue_redraw()
@@ -207,6 +222,10 @@ func _process(delta: float) -> void:
 		backhair.queue_redraw()
 	if parts.has("monkey"):
 		parts.monkey.queue_redraw()
+	if parts.has("cape"):
+		parts.cape.queue_redraw()
+	if parts.has("halo"):
+		parts.halo.position.y = -10.5 * K * 1.16 + sin(t * 0.08) * 3.0
 	if parts.has("butterfly"):
 		var bf = parts.butterfly
 		bf.position = Vector2(-10 * K + sin(t * 0.05) * 9, -40 * K * sc + sin(t * 0.13) * 6)

@@ -41,21 +41,21 @@ func C(key: String, def := "#ff00ff") -> Color:
 	return Color(String(look.get(key, def)))
 
 # ---------- small drawing helpers ----------
-func arc_pts(c: Vector2, r: float, a0: float, a1: float, n := 14) -> PackedVector2Array:
+static func arc_pts(c: Vector2, r: float, a0: float, a1: float, n := 14) -> PackedVector2Array:
 	var p := PackedVector2Array()
 	for i in n + 1:
 		var a := lerpf(a0, a1, float(i) / n)
 		p.append(c + Vector2(cos(a), sin(a)) * r)
 	return p
 
-func ell_pts(c: Vector2, rx: float, ry: float, rot := 0.0, n := 18) -> PackedVector2Array:
+static func ell_pts(c: Vector2, rx: float, ry: float, rot := 0.0, n := 18) -> PackedVector2Array:
 	var p := PackedVector2Array()
 	for i in n:
 		var a := TAU * i / n
 		p.append(c + Vector2(cos(a) * rx, sin(a) * ry).rotated(rot))
 	return p
 
-func quad(p0: Vector2, p1: Vector2, p2: Vector2, n := 8) -> PackedVector2Array:
+static func quad(p0: Vector2, p1: Vector2, p2: Vector2, n := 8) -> PackedVector2Array:
 	var p := PackedVector2Array()
 	for i in range(1, n + 1):
 		var t := float(i) / n
@@ -111,6 +111,8 @@ func _draw() -> void:
 		"monkey": _monkey()
 		"butterfly": _butterfly()
 		"aura": glow(Vector2.ZERO, 70, Color("8c3cdc"), 0.28)
+		"cape": _cape()
+		"halo": _halo()
 
 func _limb() -> void:
 	draw_set_transform(Vector2.ZERO, 0, Vector2(K, K))
@@ -134,6 +136,16 @@ func _hand() -> void:
 		rrect(-1.5, -2.8, 5, 6, 0.8, Color("3a2a5a"), 0.6)
 		draw_rect(Rect2(0.6, -2, 0.7, 4), Color("ffd25a"))
 		draw_rect(Rect2(-0.2, -0.6, 2.4, 0.7), Color("ffd25a"))
+	elif it == "club":
+		var e := Vector2(0, 13)
+		ln(Vector2.ZERO, e, OL, 4.4)
+		ln(Vector2.ZERO, e, Color("6a4028"), 3.0)
+		circ(e, 3.8, OL)
+		circ(e, 3.2, Color("7a4a30"))
+	elif it == "orb":
+		glow(Vector2(1, -1), 8, Color("aa3ce6"), 0.7)
+		circ(Vector2(1, -1), 2.4, Color("8a3ab0"))
+		circ(Vector2(0.4, -1.6), 0.8, Color("ff4b5c"))
 	elif it == "mic":
 		ln(Vector2.ZERO, Vector2(1.8, -3.4), Color("222222"), 1.4)
 		circ(Vector2(2.3, -4.3), 1.7, OL)
@@ -395,3 +407,20 @@ func _butterfly() -> void:
 		var w2 := ell_pts(Vector2(m * 1.8 * f, 1.4), 1.7 * f, 1.4, -m * 0.4, 12)
 		shape(w2, shade(c, -0.15), 0.4)
 	draw_rect(Rect2(-0.4, -2.4, 0.8, 4.6), Color("222222"))
+
+func _cape() -> void:
+	draw_set_transform(Vector2.ZERO, 0, Vector2(K, K))
+	var t := t_now()
+	var sp: float = clampf(absf(rig.vel.x) / 450.0, 0.0, 1.0) if rig else 0.0
+	var fl := sin(t * 0.25) * (0.6 + sp)
+	var p := PackedVector2Array([Vector2(-4.5, -10), Vector2(3.5, -10)])
+	p.append_array(quad(Vector2(3.5, -10), Vector2(2 - sp * 3, -2), Vector2(-3 - sp * 9 + fl, 4 + fl * 0.5)))
+	p.append(Vector2(-6 - sp * 10 + fl, 2 - sp * 3))
+	p.append_array(quad(Vector2(-6 - sp * 10 + fl, 2 - sp * 3), Vector2(-7 - sp * 4, -4), Vector2(-4.5, -10)))
+	shape(p, Color("7a3fc0"), 0.9)
+	ln(Vector2(-4.5, -10.2), Vector2(3.5, -10.2), Color("ffd25a"), 1.4)
+
+func _halo() -> void:
+	glow(Vector2.ZERO, 40, Color("ffdc64"), 0.5)
+	draw_set_transform(Vector2.ZERO, 0, Vector2(1, 0.32))
+	draw_arc(Vector2.ZERO, 18, 0, TAU, 32, Color("ffe27a"), 6, false)

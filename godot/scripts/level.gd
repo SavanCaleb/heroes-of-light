@@ -9,11 +9,22 @@ const OL := Color("1b1430")
 var grid: Array = []          # grid[col][row] -> char
 var objs: Array = []          # spawn markers: {t, pos, col, row}
 var width_px := 0.0
-var theme := {
-	ground=Color("8a5a34"), ground2=Color("6e4526"), top=Color("5cc35a"), top2=Color("3f9a45"), stone=Color("a39a8e"),
+var theme := {}
+var theme_name := "garden"
+const THEMES := {
+	garden=["8a5a34", "6e4526", "5cc35a", "3f9a45", "a39a8e"],
+	desert=["c98f4a", "a9733a", "f2cf86", "d9ad60", "c09a6a"],
+	sea=["7d5c3c", "5e432a", "b89466", "94744c", "7a7a86"],
+	forest=["4a3a3a", "3a2a2a", "2f7a4a", "1f5236", "5a6a7a"],
+	city=["55556a", "3f3f52", "9b9bb0", "77778c", "8a8aa0"],
+	snow=["6a7a96", "56647e", "f4f8ff", "cfdcef", "a8b4c8"],
+	mount=["43354f", "30253c", "d9c690", "b29f6c", "6d5f80"],
 }
 
 func build(level: Dictionary) -> void:
+	theme_name = level.theme
+	var tc: Array = THEMES.get(theme_name, THEMES.garden)
+	theme = {ground=Color(tc[0]), ground2=Color(tc[1]), top=Color(tc[2]), top2=Color(tc[3]), stone=Color(tc[4])}
 	var cols: Array = []
 	var x0 := 0
 	for name in level.chunks:
@@ -31,7 +42,7 @@ func build(level: Dictionary) -> void:
 			for r in ROWS:
 				var s: String = rows[r]
 				var t := s[c] if c < s.length() else "."
-				if "PoGhsejfcnmtWB".contains(t):
+				if "PoGhsejfcnmtbWB".contains(t):
 					objs.append({t=t, pos=Vector2((x0 + c) * T, r * T), col=x0 + c, row=r})
 					t = "."
 				colv.append(t)
@@ -146,6 +157,8 @@ func _ground(c: int, r: int, x: float, y: float) -> void:
 		draw_polygon(pts, cols)
 		draw_line(Vector2(x1, y - 3), Vector2(x2, y - 3), OL, 2.5, false)
 		draw_line(Vector2(x1, y - 1), Vector2(x2, y - 1), Color(1, 1, 1, 0.35), 2.0, false)
+		if not theme_name in ["garden", "forest", "sea"]:
+			return
 		# grass blades and little flowers
 		for i in 4:
 			var bx := x + 5 + i * 11 + hsh(c, i) * 4

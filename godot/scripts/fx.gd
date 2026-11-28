@@ -221,3 +221,72 @@ class Candle extends Node2D:
 			draw_line(Vector2(0, -42), Vector2(0, -50), Color("333333"), 2)
 	func _flame(f: float) -> PackedVector2Array:
 		return PackedVector2Array([Vector2(0, -64 + f), Vector2(5, -50), Vector2(0, -43), Vector2(-5, -50)])
+
+## The "!" over a friend you haven't talked to yet.
+class Bubble extends Node2D:
+	var t := 0.0
+	func _process(d: float) -> void:
+		t += d
+		queue_redraw()
+	func _draw() -> void:
+		var b := absf(sin(t * 4.0)) * 8.0
+		draw_circle(Vector2(0, -b), 20, Color("1b1430"))
+		draw_circle(Vector2(0, -b), 17, Color("ffd25a"))
+		draw_rect(Rect2(-3, -b - 11, 6, 14), Color("1b1430"))
+		draw_rect(Rect2(-3, -b + 6, 6, 5), Color("1b1430"))
+
+## A blinking red mark where a fire pillar is about to strike.
+class Warning extends Node2D:
+	var t := 0.0
+	func _process(d: float) -> void:
+		t += d
+		queue_redraw()
+	func _draw() -> void:
+		if int(t * 10) % 2 == 0:
+			draw_set_transform(Vector2.ZERO, 0, Vector2(1, 0.3))
+			draw_circle(Vector2.ZERO, 40, Color(1, 0.3, 0.35, 0.55))
+			draw_set_transform(Vector2.ZERO)
+		draw_texture_rect(Part.glow_tex(), Rect2(-50, -200, 100, 200), false, Color(1, 0.3, 0.2, 0.25 * t))
+
+## A fading streak left behind during a dash.
+class Ghost extends Node2D:
+	var t := 0.0
+	var col := Color.WHITE
+	var face := 1
+	func _ready() -> void:
+		z_index = 2
+		material = additive()
+	func _process(d: float) -> void:
+		t += d
+		if t > 0.25:
+			queue_free()
+		queue_redraw()
+	func _draw() -> void:
+		var a := 1.0 - t / 0.25
+		draw_texture_rect(Part.glow_tex(), Rect2(-40, -100, 80, 100), false, Color(col, 0.55 * a))
+		draw_line(Vector2(-face * 20, -50), Vector2(-face * 90, -50), Color(1, 1, 1, 0.5 * a), 4)
+		draw_line(Vector2(-face * 10, -20), Vector2(-face * 70, -20), Color(1, 1, 1, 0.4 * a), 3)
+	static func additive() -> CanvasItemMaterial:
+		var m := CanvasItemMaterial.new()
+		m.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+		return m
+
+## The guardian angel that appears when it saves you.
+class Angel extends Node2D:
+	var t := 0.0
+	func _process(d: float) -> void:
+		t += d
+		position.y -= d * 40.0
+		modulate.a = clampf(2.5 - t, 0, 1)
+		if t > 2.5:
+			queue_free()
+		queue_redraw()
+	func _draw() -> void:
+		var f := sin(t * 10.0) * 0.2
+		draw_texture_rect(Part.glow_tex(), Rect2(-120, -120, 240, 240), false, Color(1, 0.95, 0.8, 0.7))
+		for m in [-1.0, 1.0]:
+			draw_colored_polygon(Part.ell_pts(Vector2(m * 30, -10), 34, 14, m * (-0.5 + f)), Color.WHITE)
+		draw_colored_polygon(PackedVector2Array([Vector2(-14, -6), Vector2(14, -6), Vector2(22, 50), Vector2(-22, 50)]), Color("fbf7ee"))
+		draw_circle(Vector2(0, -22), 14, Color("f3d2b8"))
+		draw_set_transform(Vector2(0, -44), 0, Vector2(1, 0.3))
+		draw_arc(Vector2.ZERO, 16, 0, TAU, 24, Color("ffd25a"), 5)

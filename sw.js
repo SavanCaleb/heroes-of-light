@@ -1,6 +1,6 @@
 // Offline support: keep a copy of the game so it opens with no internet.
 // Pages load from the network first (so updates show up), and fall back to the saved copy.
-const CACHE = 'heroes-v4';
+const CACHE = 'heroes-v5';
 const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-180.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)).then(() => self.skipWaiting()));

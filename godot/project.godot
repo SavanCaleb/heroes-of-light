@@ -5,7 +5,7 @@ config_version=5
 
 config/name="Heroes of Light"
 config/description="A Christian fighting platformer."
-run/main_scene="res://main.tscn"
+run/main_scene="res://menu.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.png"
 boot_splash/bg_color=Color(0.05, 0.043, 0.1, 1)
@@ -36,3 +36,7 @@ environment/defaults/default_clear_color=Color(0.05, 0.043, 0.1, 1)
 [input_devices]
 
 pointing/emulate_touch_from_mouse=true
+
+[autoload]
+
+Game="*res://scripts/game.gd"
