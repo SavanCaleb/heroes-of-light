@@ -52,6 +52,8 @@ var slam_fall := false
 var armor := 0.0            # brutes shrug off small hits
 var juggle := false
 var ai_t := 0.0
+var skill_i := 0
+var armor_god := 0.0      # Savan's Armor of God: less damage taken, more given
 var input := {dir=0, jump_p=false, jump_h=false, atk_p=false, skill_p=false, super_p=false, block=false}
 
 func setup(m, d: Dictionary, is_ai: bool, tm: String, k := "hero", extra_look := {}) -> void:
@@ -97,6 +99,8 @@ func dmg_mul() -> float:
 		m *= 1.0 + Game.own("glove") * 0.12
 	if kind == "ally":
 		m *= 0.45
+	if armor_god > 0.0:
+		m *= 1.3
 	return m
 
 func max_air_jumps() -> int:
@@ -126,6 +130,10 @@ func _physics_process(delta: float) -> void:
 	blocking = input.block and on_floor and not busy and atk == "" and dash_t <= 0.0
 	if dir != 0 and not busy and atk == "" and not blocking and dash_t <= 0.0:
 		face = dir
+	if armor_god > 0.0:
+		armor_god -= delta
+		if int(armor_god * 20.0) % 3 == 0:
+			main.armor_sparkle(self)
 	# energy
 	var regen: float = 9.6 * (1.0 + (Game.own("oil") * 0.25 if kind == "hero" else 0.0))
 	mp = minf(100.0, mp + regen * delta)
@@ -300,6 +308,8 @@ func take_hit(dmg: float, dir: int, kb: float, up: float) -> bool:
 		return false
 	if kind == "hero":
 		dmg *= 1.0 - Game.own("helmet") * 0.12
+		if armor_god > 0.0:
+			dmg *= 0.4
 	hp -= dmg
 	rig.flash = 1.0
 	var heavy := dmg >= armor

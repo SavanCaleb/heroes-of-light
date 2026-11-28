@@ -6,8 +6,15 @@ const INK := Color("1b1430")
 const CREAM := Color("fff6d8")
 const Part := preload("res://scripts/part.gd")
 
+static var _bold: Font
+
 static func font() -> Font:
 	return ThemeDB.fallback_font
+
+static func bold() -> Font:
+	if _bold == null:
+		_bold = load("res://fonts/Poppins-Bold.ttf")
+	return _bold
 
 static func panel(ci: CanvasItem, r: Rect2, sel := false, alpha := 0.92) -> void:
 	var sb := StyleBoxFlat.new()

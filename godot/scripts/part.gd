@@ -112,6 +112,7 @@ func _draw() -> void:
 		"butterfly": _butterfly()
 		"aura": glow(Vector2.ZERO, 70, Color("8c3cdc"), 0.28)
 		"cape": _cape()
+		"robe": _robe()
 		"halo": _halo()
 
 func _limb() -> void:
@@ -146,6 +147,17 @@ func _hand() -> void:
 		glow(Vector2(1, -1), 8, Color("aa3ce6"), 0.7)
 		circ(Vector2(1, -1), 2.4, Color("8a3ab0"))
 		circ(Vector2(0.4, -1.6), 0.8, Color("ff4b5c"))
+	elif it == "staff":
+		ln(Vector2(0, 8), Vector2(0.6, -16), OL, 2.4)
+		ln(Vector2(0, 8), Vector2(0.6, -16), Color("8a5a2a"), 1.5)
+		draw_arc(Vector2(-1.2, -16), 1.8, PI, TAU, 8, Color("8a5a2a"), 1.4, false)
+	elif it == "sling":
+		ln(Vector2.ZERO, Vector2(2, 5), Color("6a4a2a"), 0.6)
+		ln(Vector2.ZERO, Vector2(-2, 5), Color("6a4a2a"), 0.6)
+		circ(Vector2(0, 5.6), 1.4, Color("9a9a9a"))
+	elif it == "trumpet":
+		ln(Vector2(-1, 0), Vector2(5, -2), Color("d8b040"), 1.2)
+		draw_colored_polygon(PackedVector2Array([Vector2(5, -2), Vector2(8, -4.5), Vector2(8.6, 0.6)]), Color("ffd25a"))
 	elif it == "mic":
 		ln(Vector2.ZERO, Vector2(1.8, -3.4), Color("222222"), 1.4)
 		circ(Vector2(2.3, -4.3), 1.7, OL)
@@ -424,3 +436,14 @@ func _halo() -> void:
 	glow(Vector2.ZERO, 40, Color("ffdc64"), 0.5)
 	draw_set_transform(Vector2.ZERO, 0, Vector2(1, 0.32))
 	draw_arc(Vector2.ZERO, 18, 0, TAU, 32, Color("ffe27a"), 6, false)
+
+func _robe() -> void:
+	# a long tunic for the Bible characters, hanging from the waist to the shins
+	draw_set_transform(Vector2.ZERO, 0, Vector2(K, K))
+	var c := C("robe")
+	var t := t_now()
+	var sw := sin(t * 0.12) * 0.6 + (clampf(rig.vel.x / 450.0, -1, 1) * -1.5 if rig else 0.0)
+	var p := PackedVector2Array([Vector2(-4.6, -1), Vector2(4.6, -1), Vector2(6.0 + sw, 8.5), Vector2(-6.0 + sw, 8.5)])
+	shape(p, c, 0.9)
+	draw_colored_polygon(PackedVector2Array([Vector2(-4.6, -1), Vector2(-1.5, -1), Vector2(-2.5 + sw, 8.5), Vector2(-6.0 + sw, 8.5)]), Color(0, 0, 0, 0.15))
+	ln(Vector2(-4.4, 0), Vector2(4.4, 0), shade(c, -0.3), 1.2)

@@ -68,6 +68,8 @@ func setup(lk: Dictionary) -> void:
 	_arm("B", Vector2(-1.4 * K, -7.9 * K), Part.shade(top, -0.14), Part.shade(fore, -0.14), aw, covered, -4)
 	_arm("F", Vector2(1.2 * K, -7.9 * K), top, fore, aw, covered, 3)
 	_leg("F", Vector2(1.6 * K, 0), pants, 1)
+	if lk.has("robe"):
+		_add("robe", hip, Vector2.ZERO, 2)
 	if lk.has("butterfly"):
 		_add("butterfly", self, Vector2(-10 * K, -40 * K), 5)
 	cur = _pose_target("idle")
@@ -224,6 +226,8 @@ func _process(delta: float) -> void:
 		parts.monkey.queue_redraw()
 	if parts.has("cape"):
 		parts.cape.queue_redraw()
+	if parts.has("robe"):
+		parts.robe.queue_redraw()
 	if parts.has("halo"):
 		parts.halo.position.y = -10.5 * K * 1.16 + sin(t * 0.08) * 3.0
 	if parts.has("butterfly"):

@@ -47,7 +47,7 @@ func _input(event: InputEvent) -> void:
 		if id != "":
 			main.on_button(id)
 			get_viewport().set_input_as_handled()
-		elif main.mode in ["dialog", "results"] or get_tree().paused:
+		elif main.mode in ["dialog"]:
 			main.on_button("next")
 			get_viewport().set_input_as_handled()
 
@@ -87,6 +87,9 @@ func _draw() -> void:
 	if full:
 		draw_texture_rect(Part.glow_tex(), Rect2(300, 70, 160, 70), false, Color(1, 0.85, 0.4, 0.4 + 0.3 * sin(t * 8.0)))
 	UI.text(self, ("SUPER READY!  " + ("tap SUPER" if Game.touch else "press U")) if full else "SUPER", Vector2(32, 126), 15, Color("fff6c0") if (full and int(t * 4) % 2 == 0) else Color(1, 0.9, 0.6, 0.75), HORIZONTAL_ALIGNMENT_LEFT, -1, 4)
+	var ns: String = main.next_skill_name(p)
+	if ns != "":
+		UI.text(self, "Next skill: " + ns, Vector2(32, 152), 15, Color("c8b8ff"), HORIZONTAL_ALIGNMENT_LEFT, -1, 4)
 	# --- coins ---
 	UI.coin_badge(self, Vector2(vw - 190 - right_pad, 14), Game.save.coins + main.coins_n)
 	UI.text(self, "freed " + str(main.freed), Vector2(vw - 186 - right_pad, 86), 17, Color("e8e0ff"))
@@ -95,7 +98,7 @@ func _draw() -> void:
 	var prog := clampf(p.position.x / maxf(1.0, lw - 60.0), 0, 1)
 	var bw := 380.0
 	var bx := vw * 0.5 - bw / 2
-	UI.text(self, "Land %d: %s" % [Game.level_i + 1, main.L.name], Vector2(bx, 34), 20, UI.CREAM, HORIZONTAL_ALIGNMENT_CENTER, bw, 5)
+	UI.text(self, "Story %d: %s" % [Game.level_i + 1, main.L.name], Vector2(bx, 34), 20, UI.CREAM, HORIZONTAL_ALIGNMENT_CENTER, bw, 5)
 	_bar(Rect2(bx, 44, bw, 12), prog, Color("fff0a0"), Color("ffb020"))
 	for z in main.zones:
 		var zx: float = bx + bw * clampf((z.x + 640.0) / lw, 0, 1)
@@ -166,13 +169,27 @@ func _draw() -> void:
 	if main.mode == "dialog":
 		_dialog(vs)
 	if main.mode == "grace":
-		draw_rect(Rect2(Vector2.ZERO, vs), Color(1, 0.95, 0.75, minf(0.85, main.grace_t)))
-		UI.text_c(self, "GRACE!", Vector2(vw / 2, vs.y * 0.4), 90, Color("a86a0c"), 10)
-		UI.text_c(self, "Jesus lifts you up. \"My grace is sufficient for thee.\" (2 Corinthians 12:9)", Vector2(vw / 2, vs.y * 0.4 + 80), 22, Color("4a3010"), 0)
+		_try_again(vs)
 	if main.mode == "results":
 		_results(vs)
 	if get_tree().paused:
 		_pause(vs)
+
+func _try_again(vs: Vector2) -> void:
+	## A gentle note when you fall: no game over, just get back up.
+	var a := clampf(main.grace_t * 3.0, 0, 1)
+	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.05, 0.03, 0.12, 0.55 * a))
+	var r := Rect2(vs.x / 2 - 300, vs.y / 2 - 170 + (1.0 - a) * 40, 600, 330)
+	UI.panel(self, r, true, 0.95 * a)
+	draw_texture_rect(Part.glow_tex(), Rect2(r.get_center() - Vector2(120, 210), Vector2(240, 200)), false, Color(1, 0.85, 0.45, 0.5 * a))
+	UI.star(self, r.position + Vector2(r.size.x / 2, 62), 30, true)
+	UI.text_c(self, "Don't give up!", r.position + Vector2(r.size.x / 2, 126), 40, Color(1, 0.82, 0.35, a), 8)
+	UI.text_c(self, "Every hero falls sometimes. Let's try again!", r.position + Vector2(r.size.x / 2, 172), 21, Color(1, 0.97, 0.85, a), 5)
+	UI.text_c(self, "\"A just man falleth seven times, and riseth up again.\"", r.position + Vector2(r.size.x / 2, 210), 17, Color(1, 0.91, 0.66, a), 4)
+	UI.text_c(self, "Proverbs 24:16", r.position + Vector2(r.size.x / 2, 234), 15, Color(0.85, 0.78, 1, a), 4)
+	var b := Rect2(r.position.x + r.size.x / 2 - 140, r.end.y - 76, 280, 58)
+	UI.button(self, b, "TRY AGAIN", true, 26)
+	hits.append([b, "retry"])
 
 func _rating(n: int) -> String:
 	if n >= 40: return "HALLELUJAH!"
@@ -238,7 +255,7 @@ func _results(vs: Vector2) -> void:
 	draw_rect(Rect2(Vector2.ZERO, vs), Color(0.04, 0.02, 0.12, 0.6))
 	var r := Rect2(vs.x / 2 - 330, 60, 660, 590)
 	UI.panel(self, r, true, 0.95)
-	UI.text_c(self, "LAND RESTORED!" if not res.get("won", false) else "THE CHAINS ARE BROKEN!", Vector2(vs.x / 2, 118), 48, UI.GOLD, 9)
+	UI.text_c(self, "STORY COMPLETE!" if not res.get("won", false) else "THE CHAINS ARE BROKEN!", Vector2(vs.x / 2, 118), 48, UI.GOLD, 9)
 	UI.text_c(self, main.L.name, Vector2(vs.x / 2, 160), 22, Color("e8d8ff"), 5)
 	var why := ["Finished the land", "Found every coin", "No falls"]
 	for i in 3:
@@ -254,13 +271,17 @@ func _results(vs: Vector2) -> void:
 			UI.text(self, rows[i][0], Vector2(r.position.x + 70, 350 + i * 40), 24, Color("c8b8e8"))
 			UI.text(self, rows[i][1], Vector2(r.position.x + 70, 350 + i * 40), 24, UI.CREAM, HORIZONTAL_ALIGNMENT_RIGHT, r.size.x - 140)
 	if rt > 1.8:
-		UI.text_c(self, "\"" + main.L.verse + "\"", Vector2(vs.x / 2, 530), 18, Color("ffe9a8"), 4)
-		var b1 := Rect2(vs.x / 2 - 260, 570, 240, 60)
-		var b2 := Rect2(vs.x / 2 + 20, 570, 240, 60)
+		UI.text_c(self, "Lesson: " + main.L.lesson, Vector2(vs.x / 2, 516), 19, Color("9ff0b0"), 4)
+		UI.text_c(self, "\"" + main.L.verse + "\"", Vector2(vs.x / 2, 546), 16, Color("ffe9a8"), 4)
+		var b1 := Rect2(vs.x / 2 - 260, 574, 240, 60)
+		var b2 := Rect2(vs.x / 2 + 20, 574, 240, 60)
 		UI.button(self, b1, "MAP & SHOP", false, 26)
 		hits.append([b1, "map"])
-		if Game.level_i + 1 < Data.LEVELS.size():
-			UI.button(self, b2, "NEXT LAND  >", true, 26)
+		if res.get("won", false):
+			UI.button(self, b2, "THE CREDITS  >", true, 24)
+			hits.append([b2, "credits"])
+		elif Game.level_i + 1 < Data.LEVELS.size():
+			UI.button(self, b2, "NEXT STORY  >", true, 26)
 			hits.append([b2, "nextland"])
 
 func _pause(vs: Vector2) -> void:

@@ -7,14 +7,14 @@ const UI := preload("res://scripts/ui.gd")
 const Part := preload("res://scripts/part.gd")
 
 const DESC := {
-	alisa="Loud, funny explorer with a backpack and Mango the monkey. Double jump!",
-	sarah="Quiet, sweet and smart. Loves butterflies and drives REALLY fast. Hold JUMP to float.",
+	alisa="Loud, funny explorer with a backpack and Mango the monkey.",
+	sarah="Quiet, sweet and smart. Loves butterflies and flowers, and drives REALLY fast.",
 	shalom="The tech guy. Laser bot and computer brains.",
-	zion="Mariana's husband. Tall, full of energy, the most HP and the hardest hits.",
+	zion="Mariana's husband. Tall and full of energy. His stomp shakes the ground!",
 	mariana="Zion's wife and a physiotherapist. Long-reach band whips.",
 	steven="Short, muscular and the fastest runner. Great with kids.",
 	edikan="A doctor and the youth leader. Praise that blasts shadows and heals friends.",
-	savan="Secret agent of the Kingdom. Sharp suit, black shades, sword waves. Double jump!",
+	savan="Secret agent of the Kingdom. Sharp suit, black shades, and THREE skills that take turns.",
 }
 const SKILL_NAME := {monkey="Mango Mayhem", swarm="Flutter Storm", laser="Laser Bot 3000", pound="Thunder Stomp", band="Snap-Back Band", sprint="Lightning Lap", praise="Hallelujah Blast", sword="Spirit Blade"}
 const LAND_COL := {garden="5cc35a", desert="f2b860", sea="3a7ac8", forest="2f6a5a", city="9b8bd0", snow="dfeaff", mount="c8464a"}
@@ -32,6 +32,22 @@ var stage: Node2D
 var big_rig
 var map_rig
 var logo: Texture2D
+var credits_y := 0.0
+
+const CREDITS := [
+	["big", "HEROES OF LIGHT"], ["", "Thank you for playing!"], ["gap", ""],
+	["head", "Made with love for"], ["church", "FREEDOM WORSHIP CENTRE"], ["gap", ""],
+	["head", "THE HEROES"], ["", "Alisa  -  The Explorer"], ["", "Sarah  -  The Butterfly"], ["", "Shalom  -  The Techie"], ["", "Zion  -  The Tower"],
+	["", "Mariana  -  The Physio"], ["", "Steven  -  The Sprinter"], ["", "Edikan  -  The Youth Leader"], ["", "Savan  -  The Agent"], ["gap", ""],
+	["head", "THE HELPERS"], ["", "Pastor Heike"], ["", "Elder Francis"], ["", "Marie"], ["", "Grandma Belinda"], ["gap", ""],
+	["head", "IN THE STORIES"], ["", "Noah  -  David  -  Peter  -  Daniel  -  Joshua  -  Moses"], ["gap", ""],
+	["head", "GAME DESIGN AND DEVELOPMENT"], ["maker", "Made by Savan"], ["gap", ""],
+	["head", "MUSIC"], ["", "Juhani Junkala (SubspaceAudio)"], ["small", "JRPG Music Packs, CC0"], ["gap", ""],
+	["head", "FONT"], ["", "Poppins by Indian Type Foundry"], ["gap", ""],
+	["head", "BUILT WITH"], ["", "Godot Engine"], ["gap", ""], ["gap", ""],
+	["verse", "If the Son therefore shall make you free, ye shall be free indeed."], ["small", "John 8:36"], ["gap", ""], ["gap", ""],
+	["big", "THE END"],
+]
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -40,9 +56,13 @@ func _ready() -> void:
 	sel_hero = int(Game.save.hero)
 	sel_land = clampi(Game.level_i, 0, int(Game.save.unlocked) - 1)
 	logo = load("res://icon.png")
+	Game.music("menu")
 	stage = Node2D.new()
 	add_child(stage)
 	var start := "map" if Game.save.help_seen and Game.has_meta("from_land") else "title"
+	if Game.has_meta("credits"):
+		Game.remove_meta("credits")
+		start = "credits"
 	for a in OS.get_cmdline_user_args():
 		if a.begins_with("screen="):
 			start = a.substr(7)
@@ -69,6 +89,17 @@ func _go(s: String) -> void:
 			big_rig = _rig(Data.HEROES[sel_hero].look, Vector2(vs.x - 120, 470), 2.0, "idle", -1)
 		"map":
 			map_rig = _rig(Data.HEROES[sel_hero].look, _node_pos(sel_land, vs) + Vector2(0, -34), 0.75, "cheer", 1)
+		"credits":
+			Game.music("credits")
+			credits_y = 0.0
+			var all: Array = []
+			for h in Data.HEROES:
+				all.append(h.look)
+			for id in ["heike", "francis", "marie", "belinda"]:
+				all.append(Data.NPCS[id].look)
+			for i in all.size():
+				var x := vs.x * (0.06 + 0.88 * float(i) / (all.size() - 1))
+				_rig(all[i], Vector2(x, vs.y - 24), 0.85, "cheer", 1 if x < vs.x / 2 else -1)
 		"shop":
 			var lk: Dictionary = Data.HEROES[sel_hero].look.duplicate()
 			if Game.own("cape") > 0: lk.cape = true
@@ -104,6 +135,7 @@ func _process(d: float) -> void:
 
 func _back() -> void:
 	match state:
+		"credits": _go("title")
 		"help": _go(help_then)
 		"select": _go("title")
 		"map": _go("select")
@@ -111,6 +143,7 @@ func _back() -> void:
 
 func _confirm() -> void:
 	match state:
+		"credits": _go("title")
 		"title": _act("play")
 		"help": _act("gotit")
 		"select": _act("choose")
@@ -137,6 +170,9 @@ func _input(event: InputEvent) -> void:
 				return
 
 func _act(id: String) -> void:
+	if id == "endcredits":
+		_go("title")
+		return
 	if id.begins_with("hero"):
 		sel_hero = int(id.substr(4))
 		_go("select")
@@ -226,6 +262,7 @@ func _draw() -> void:
 		"select": _select(vs)
 		"map": _map(vs)
 		"shop": _shop(vs)
+		"credits": _credits(vs)
 	if msg_t > 0.0:
 		var a := clampf(msg_t * 2.0, 0, 1)
 		UI.panel(self, Rect2(vs.x / 2 - 320, vs.y - 96, 640, 60), true, 0.9 * a)
@@ -268,7 +305,7 @@ func _title(vs: Vector2) -> void:
 	UI.text_c(self, "FREEDOM", c + Vector2(0, -111), 18, Color.WHITE, 0)
 	# logo and title
 	draw_texture_rect(Part.glow_tex(), Rect2(vs.x / 2 - 520, -40, 1040, 260), false, Color(1, 0.8, 0.3, 0.25))
-	var f := UI.font()
+	var f := UI.bold()
 	var title := "HEROES OF LIGHT"
 	var sz := f.get_string_size(title, HORIZONTAL_ALIGNMENT_LEFT, -1, 86)
 	var tp := Vector2(vs.x / 2 - sz.x / 2 + 50, 128)
@@ -283,7 +320,10 @@ func _title(vs: Vector2) -> void:
 	_button(Rect2(vs.x / 2 - bw - 20, vs.y * 0.7 + 90, bw, 58), "HOW TO PLAY", "help", false, 24)
 	_button(Rect2(vs.x / 2 + 20, vs.y * 0.7 + 90, bw, 58), "SHOP", "shop", false, 24)
 	UI.coin_badge(self, Vector2(vs.x - 200, 24), int(Game.save.coins))
-	UI.text_c(self, "a game by Savan", Vector2(vs.x / 2, vs.y - 18), 18, Color("ffe9c8"), 4)
+	var mb := "Made by Savan"
+	var mw := UI.bold().get_string_size(mb, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x
+	draw_string_outline(UI.bold(), Vector2(vs.x / 2 - mw / 2, vs.y - 14), mb, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, 6, UI.INK)
+	draw_string(UI.bold(), Vector2(vs.x / 2 - mw / 2, vs.y - 14), mb, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color("ffe9c8"))
 
 func _help(vs: Vector2) -> void:
 	UI.text_c(self, "HOW TO PLAY", Vector2(vs.x / 2, 56), 52, UI.GOLD, 10)
@@ -292,7 +332,7 @@ func _help(vs: Vector2) -> void:
 	var cols := [
 		["CONTROLS", (["Left pad: run (slide to turn)", "JUMP: jump (tap again in the air)", "ATTACK: punch and kick", "BLOCK: hold to defend", "SKILL: your hero's power", "SUPER: your ultimate move", "II: pause"] if Game.touch else ["A / D or arrows: run", "SPACE / W: jump", "J: punch and kick", "S / Down: hold to block", "K: your hero's SKILL", "U or SHIFT: SUPER", "ESC: pause"])],
 		["FIGHTING", ["Tap ATTACK 4 times for jab, cross, kick and an UPPERCUT that launches shadows", "Jump after them: punch, kick and SLAM them down", "Hits build a combo and fill the gold SUPER meter", "SKILL uses blue energy, which refills by itself"]],
-		["YOUR QUEST", ["Cross 7 lands to free the church on the hill", "BATTLE zones lock the screen until every shadow is freed", "Talk to friends for help and healing", "Grab coins, earn 3 stars per land, and shop in the Manna Market"]],
+		["YOUR QUEST", ["Step into 7 Bible stories: Noah, David, Daniel and more, then free the church on the hill", "BATTLE zones lock the screen until every shadow is freed", "Talk to friends for help and healing", "Grab coins, earn 3 stars per land, and shop in the Manna Market"]],
 	]
 	for i in 3:
 		var r := Rect2(x0 + i * (cw + 20), 100, cw, vs.y - 230)
@@ -324,11 +364,11 @@ func _select(vs: Vector2) -> void:
 		UI.text(self, l, Vector2(pr.position.x + 30, y), 19, UI.CREAM, HORIZONTAL_ALIGNMENT_LEFT, -1, 4)
 		y += 26
 	y += 10
-	UI.text(self, "SKILL", Vector2(pr.position.x + 30, y), 17, Color("b8a8ff"))
-	UI.text(self, SKILL_NAME[Data.SKILL[h.id]], Vector2(pr.position.x + 30, y + 26), 21, UI.CREAM)
+	UI.text(self, "SKILLS (3)" if h.id == "savan" else "SKILL", Vector2(pr.position.x + 30, y), 17, Color("b8a8ff"))
+	UI.text(self, "Spirit Blade, Agent Dash, Armor of God" if h.id == "savan" else SKILL_NAME[Data.SKILL[h.id]], Vector2(pr.position.x + 30, y + 26), 19 if h.id == "savan" else 21, UI.CREAM)
 	UI.text(self, "SUPER", Vector2(pr.position.x + 30, y + 60), 17, Color("ffd25a"))
 	UI.text(self, h.sup, Vector2(pr.position.x + 30, y + 86), 21, UI.CREAM)
-	var stats := [["SPEED", clampi(int(round((h.spd - 1.9) * 4)), 1, 5)], ["JUMP", clampi(int(round((h.jmp - 7.6) * 4.5)), 1, 5)], ["HP", clampi(int(round(h.hp / 26.0)), 1, 5)], ["POWER", clampi(int(round(h.get("dmg", 1.0) * 4)), 1, 5)]]
+	var stats := [["SPEED", 4], ["JUMP", 4], ["HP", 4], ["POWER", 4]]
 	for i in stats.size():
 		var sy := pr.end.y - 190 + i * 30
 		UI.text(self, stats[i][0], Vector2(pr.position.x + 30, sy), 17, Color("c8b8e8"))
@@ -340,7 +380,7 @@ func _select(vs: Vector2) -> void:
 	_button(Rect2(pr.position.x + 30, pr.end.y - 66, 260, 54), "CHOOSE  >", "choose", true, 26)
 
 func _map(vs: Vector2) -> void:
-	UI.text_c(self, "CHOOSE A LAND", Vector2(vs.x / 2, 56), 44, UI.GOLD, 9)
+	UI.text_c(self, "CHOOSE A BIBLE STORY", Vector2(vs.x / 2, 56), 44, UI.GOLD, 9)
 	UI.coin_badge(self, Vector2(vs.x - 200, 24), int(Game.save.coins))
 	var n := Data.LEVELS.size()
 	var path := PackedVector2Array()
@@ -377,9 +417,9 @@ func _map(vs: Vector2) -> void:
 	var L2: Dictionary = Data.LEVELS[sel_land]
 	var r := Rect2(vs.x / 2 - 420, vs.y - 230, 840, 200)
 	UI.panel(self, r, true, 0.9)
-	UI.text(self, "Land %d: %s" % [sel_land + 1, L2.name], r.position + Vector2(30, 52), 34, UI.GOLD)
+	UI.text(self, "Story %d: %s" % [sel_land + 1, L2.name], r.position + Vector2(30, 52), 34, UI.GOLD)
 	var y := r.position.y + 92
-	for l in UI.wrap(L2.intro + ("  A boss waits at the end!" if L2.has("boss") else ""), 520, 20):
+	for l in UI.wrap(String(L2.story[0][1]) + ("  A boss waits at the end!" if L2.has("boss") else ""), 520, 20):
 		UI.text(self, l, Vector2(r.position.x + 30, y), 20, UI.CREAM, HORIZONTAL_ALIGNMENT_LEFT, -1, 4)
 		y += 28
 	_button(Rect2(r.end.x - 270, r.position.y + 40, 240, 70), "PLAY  >", "go", true, 32)
@@ -426,3 +466,44 @@ func _shop(vs: Vector2) -> void:
 	else:
 		_button(Rect2(pr.position.x + 30, pr.end.y - 92, pr.size.x - 60, 64), "BUY   " + str(it2.price), "buy", int(Game.save.coins) >= int(it2.price), 28)
 	_button(Rect2(x0, vs.y - 86, 200, 58), "<  BACK", "back", false, 24)
+
+func _credits(vs: Vector2) -> void:
+	credits_y += get_process_delta_time() * 55.0
+	draw_texture_rect(Part.glow_tex(), Rect2(vs.x / 2 - 500, vs.y - 420, 1000, 600), false, Color(1, 0.85, 0.45, 0.3))
+	var y := vs.y - 150 - credits_y
+	for c in CREDITS:
+		var kind: String = c[0]
+		var s: String = c[1]
+		match kind:
+			"gap": y += 36
+			"big":
+				var w := UI.bold().get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 64).x
+				draw_string_outline(UI.bold(), Vector2(vs.x / 2 - w / 2, y), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 64, 12, UI.INK)
+				draw_string(UI.bold(), Vector2(vs.x / 2 - w / 2, y), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 64, UI.GOLD)
+				y += 84
+			"head":
+				UI.text_c(self, s, Vector2(vs.x / 2, y), 20, Color("9ff0b0"), 5)
+				y += 40
+			"church":
+				draw_texture_rect(Part.glow_tex(), Rect2(vs.x / 2 - 340, y - 70, 680, 120), false, Color(1, 0.8, 0.35, 0.35))
+				UI.text_c(self, s, Vector2(vs.x / 2, y), 44, Color("ffe27a"), 9)
+				y += 64
+			"maker":
+				var w2 := UI.bold().get_string_size(s, HORIZONTAL_ALIGNMENT_LEFT, -1, 44).x
+				draw_string_outline(UI.bold(), Vector2(vs.x / 2 - w2 / 2, y), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 44, 10, UI.INK)
+				draw_string(UI.bold(), Vector2(vs.x / 2 - w2 / 2, y), s, HORIZONTAL_ALIGNMENT_LEFT, -1, 44, Color.WHITE)
+				y += 60
+			"verse":
+				UI.text_c(self, "\"" + s + "\"", Vector2(vs.x / 2, y), 24, Color("ffe9a8"), 5)
+				y += 38
+			"small":
+				UI.text_c(self, s, Vector2(vs.x / 2, y), 17, Color("c8b8e8"), 4)
+				y += 34
+			_:
+				UI.text_c(self, s, Vector2(vs.x / 2, y), 26, UI.CREAM, 6)
+				y += 40
+	if y < vs.y * 0.45:
+		credits_y -= get_process_delta_time() * 55.0
+		var b := Rect2(vs.x / 2 - 150, vs.y * 0.55, 300, 64)
+		UI.button(self, b, "BACK TO TITLE", true, 26)
+		hits.append([b, "endcredits"])

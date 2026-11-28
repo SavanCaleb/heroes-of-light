@@ -148,11 +148,12 @@ func _ready() -> void:
 		tl.add_child(touch)
 	if Game.level_i == 0:
 		_setup_tutorial()
-	var intro: Array = [["n", "LAND %d: %s. %s" % [Game.level_i + 1, L.name, L.intro]]]
+	Game.music(land_music())
+	var intro: Array = L.story
 	if Game.demo:
-		hud.banner("LAND %d" % (Game.level_i + 1), L.name)
+		hud.banner(L.name.to_upper(), L.goal)
 	else:
-		say(intro, func(): hud.banner("LAND %d" % (Game.level_i + 1), L.name))
+		say(intro, func(): hud.banner(L.name.to_upper(), L.goal))
 
 # ---------------- spawning ----------------
 func _coin(pos: Vector2, loose: bool, vel := Vector2.ZERO) -> void:
@@ -245,6 +246,9 @@ func nearest_enemy(pos: Vector2, team: String, rng: float):
 			best = f
 	return best
 
+func land_music() -> String:
+	return ["land1", "land2", "land3"][Game.level_i % 3]
+
 func boss_name() -> String:
 	match L.get("boss", ""):
 		"giant": return "Giant of Fear"
@@ -273,7 +277,7 @@ func _physics_process(delta: float) -> void:
 			_super_step(real)
 		"grace":
 			grace_t += real
-			if grace_t > 1.6:
+			if (Game.demo and grace_t > 1.5) or (grace_t > 0.8 and (Input.is_action_just_pressed("ok") or Input.is_action_just_pressed("attack") or Input.is_action_just_pressed("jump"))):
 				_respawn()
 		"results":
 			result_t += real
@@ -388,6 +392,7 @@ func _coins(delta: float) -> void:
 		if d < 34.0:
 			coins.erase(c)
 			coins_n += 1
+			Game.sfx("coin")
 			if c.get_meta("static", false):
 				coins_static += 1
 			Fx.burst(self, c.position, Color("ffe27a"), 8, 260, 0.06)
@@ -423,6 +428,7 @@ func _world_checks() -> void:
 			z.active = true
 			_lock(z.x, z.x + vw)
 			hud.banner("BATTLE!", "Defeat every shadow to move on")
+			Game.music("battle")
 			shake = 8.0
 			_next_wave(z)
 		elif z.active and foe_count() == 0:
@@ -433,6 +439,7 @@ func _world_checks() -> void:
 				z.active = false
 				_unlock()
 				hud.banner("GO!", "The way is open  >>>")
+				Game.music(land_music())
 				_slowmo(0.5)
 	if arena and not arena.started and px > arena.x + 300:
 		arena.started = true
@@ -447,8 +454,10 @@ func _world_checks() -> void:
 			on_defeat(player)
 		else:
 			_put_back()
-	if goal and not finished and absf(px - goal.position.x) < 60:
-		_finish(false)
+	if goal and not finished and absf(px - goal.position.x) < 60 and not flags.has("outro"):
+		flags.outro = true
+		player.rig.pose = "cheer"
+		say(L.outro, func(): _finish(false))
 
 func _next_wave(z: Dictionary) -> void:
 	z.wave += 1
@@ -491,6 +500,7 @@ func _spawn_boss() -> void:
 			foes.append(boss)
 	shake = 14.0
 	hud.banner(boss_name().to_upper(), "Boss battle!")
+	Game.music("boss")
 	if L.boss == "satan":
 		_spawn_allies()
 
@@ -545,6 +555,7 @@ func _hit_fx(at: Vector2, dmg: float, team: String, attacker) -> void:
 	n.position = at + Vector2(randf_range(-12, 12), -34)
 	add_child(n)
 	hitstop = maxf(hitstop, 0.085 if big else 0.045)
+	Game.sfx("big" if big else "hit")
 	shake = maxf(shake, 10.0 if big else 4.0)
 	if big:
 		zoom_kick = 0.05
@@ -625,6 +636,9 @@ func fire_pillar(x: float) -> void:
 	add_child(pl)
 	warn.queue_free()
 
+func armor_sparkle(f) -> void:
+	Fx.burst(self, f.center() + Vector2(randf_range(-20, 20), randf_range(-40, 30)), Color(1, 0.85, 0.35), 3, 120, 0.06)
+
 func afterimage(f) -> void:
 	var g := Fx.Ghost.new()
 	g.position = f.position
@@ -670,6 +684,7 @@ func on_swing(f, A: Dictionary) -> void:
 			sw.col = Color(1, 0.45, 0.35)
 	sw.life = 0.22
 	add_child(sw)
+	Game.sfx("swing", 1.3 if A.get("sw") == "jab" else 0.9)
 	if hero and f == player:
 		if f.atk == "u4":
 			flags.uppercut = true
@@ -699,6 +714,7 @@ func on_block(f) -> void:
 	n.position = f.center() + Vector2(0, -60)
 	add_child(n)
 	Fx.burst(self, f.center() + Vector2(f.face * 20, 0), Color(0.5, 0.9, 1), 10, 300, 0.07)
+	Game.sfx("block")
 	if f == player:
 		flags.block = true
 
@@ -706,6 +722,7 @@ func on_jump(f) -> void:
 	Fx.dust(self, f.position, 5, 0.8)
 	if f == player:
 		flags.jump = true
+		Game.sfx("jump")
 
 func on_double_jump(f) -> void:
 	Fx.burst(self, f.position + Vector2(0, -4), Color.WHITE, 10, 220, 0.07)
@@ -724,9 +741,22 @@ func cast_skill(f) -> void:
 			hud.toast("Not enough energy yet (the blue bar).", 1.2)
 		return
 	f.mp -= SKILL_COST
+	Game.sfx("skill")
 	if f == player:
 		flags.skill = true
-	_skill(f, Data.SKILL.get(f.def.id, "praise"))
+	var k: String = Data.SKILL.get(f.def.id, "praise")
+	if f.def.id == "savan":
+		k = SAVAN_SKILLS[f.skill_i % SAVAN_SKILLS.size()]
+		f.skill_i += 1
+	_skill(f, k)
+
+const SAVAN_SKILLS := ["sword", "agentdash", "armor"]
+const SKILL_LABEL := {sword="Spirit Blade", agentdash="Agent Dash", armor="Armor of God"}
+
+func next_skill_name(f) -> String:
+	if f.def.id != "savan":
+		return ""
+	return SKILL_LABEL[SAVAN_SKILLS[f.skill_i % SAVAN_SKILLS.size()]]
 
 func _skill(f, k: String) -> void:
 	var m: float = f.dmg_mul()
@@ -771,6 +801,21 @@ func _skill(f, k: String) -> void:
 			for h in heroes():
 				if h.position.distance_to(f.position) < 400:
 					h.hp = minf(h.max_hp, h.hp + 12)
+		"agentdash":
+			f.dash_t = 22.0
+			f.dash_set = {}
+			_proj(f, "sword", c + Vector2(fc * 40, -8), Vector2(fc * 1400, 0), 10 * m, {pierce=true, life=0.5, r=36.0})
+		"armor":
+			f.armor_god = 8.0
+			hud.toast("The whole armor of God! (Ephesians 6:11)", 1.8)
+			var ring := Combat.Ring.new()
+			ring.main = self
+			ring.team = f.team
+			ring.position = c
+			ring.max_r = 220.0
+			ring.dmg = 8 * m
+			ring.col = Color(1, 0.85, 0.35)
+			add_child(ring)
 		"sword":
 			_proj(f, "sword", c + Vector2(fc * 40, -8), Vector2(fc * 1150, 0), 18 * m, {pierce=true, life=0.9, r=40.0})
 
@@ -806,6 +851,7 @@ func try_super(f) -> void:
 	mode = "super"
 	sup = {t=0.0, fired=false}
 	flags.super = true
+	Game.sfx("super")
 	f.rig.pose = "power"
 	var gather := CPUParticles2D.new()
 	gather.amount = 60
@@ -933,7 +979,7 @@ func on_boss_down(b) -> void:
 		if L.boss == "satan":
 			_ending()
 		else:
-			_finish(false))
+			say(L.outro, func(): _finish(false)))
 
 func _ending() -> void:
 	var lines := [["boss", "No... NO! The light is too strong!"], ["j", "Resist the devil, and he will flee from you. (James 4:7)"],
@@ -942,6 +988,7 @@ func _ending() -> void:
 		["belinda", "Told you these old bones could still fight! Now, who wants cookies?"],
 		["marie", "Everybody sing!"], ["francis", "Well done, warriors. Very well done."],
 		["j", "If the Son therefore shall make you free, ye shall be free indeed. (John 8:36)"]]
+	Game.music("credits")
 	for a in allies:
 		a.rig.pose = "cheer"
 	say(lines, func(): _finish(true))
@@ -1017,6 +1064,13 @@ func on_button(id: String) -> void:
 							then.call()
 		"resume":
 			toggle_pause()
+		"retry":
+			if mode == "grace" and grace_t > 0.5:
+				_respawn()
+		"credits":
+			Game.set_meta("credits", true)
+			Engine.time_scale = 1.0
+			get_tree().change_scene_to_file("res://menu.tscn")
 		"map":
 			get_tree().paused = false
 			Game.set_meta("from_land", true)
@@ -1063,6 +1117,7 @@ func _tutorial_check() -> void:
 		_: done = flags.has(k)
 	if done:
 		tut_i += 1
+		Game.sfx("star")
 		Fx.burst(self, player.center() + Vector2(0, -80), Color("7fe08a"), 16, 300, 0.08)
 		if tut_i >= tut.size():
 			hud.toast("You're ready! Reach the glowing cross at the end of the land.", 3.0)
