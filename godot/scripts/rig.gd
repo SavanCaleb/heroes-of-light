@@ -37,6 +37,8 @@ func setup(lk: Dictionary) -> void:
 	add_child(body)
 	if lk.get("shadow", false):
 		_add("aura", body, Vector2(0, -16 * K), -6)
+	elif Part.STICK:
+		_add("backglow", body, Vector2(0, -17 * K), -6)
 	if lk.get("monkey", false):
 		_add("monkey", body, Vector2(-13 * K, 0), -5)
 	hip = Node2D.new()
@@ -61,6 +63,8 @@ func setup(lk: Dictionary) -> void:
 	torso.add_child(head_pivot)
 	_add("neck", head_pivot, Vector2.ZERO, -1)
 	head = _add("head", head_pivot, Vector2(0, -7.3 * K), 2)
+	if Part.STICK and not lk.get("shadow", false) and not lk.has("robe"):
+		_add("scarf", head_pivot, Vector2(0, -2.0 * K), 1)
 	backhair = _add("backhair", head, Vector2.ZERO, -5)
 	if lk.get("halo", false):
 		var h = _add("halo", head, Vector2(0, -10.5 * K * 1.16), 4)
@@ -226,6 +230,8 @@ func _process(delta: float) -> void:
 		parts.monkey.queue_redraw()
 	if parts.has("cape"):
 		parts.cape.queue_redraw()
+	if parts.has("scarf"):
+		parts.scarf.queue_redraw()
 	if parts.has("robe"):
 		parts.robe.queue_redraw()
 	if parts.has("halo"):

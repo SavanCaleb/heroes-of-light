@@ -114,11 +114,10 @@ func _process(_d: float) -> void:
 	queue_redraw()
 
 func _glass(c: Vector2, r: float, tint: Color, down: bool, alpha := 1.0) -> void:
-	r *= 0.9 if down else 1.0
-	draw_circle(c + Vector2(0, 5), r, Color(0, 0, 0, 0.25 * alpha), true, -1, true)
-	draw_circle(c, r, Color(tint.darkened(0.2), (0.62 if down else 0.45) * alpha), true, -1, true)
-	draw_texture_rect(Part.glow_tex(), Rect2(c + Vector2(-r * 0.8, -r * 0.95), Vector2(r * 1.6, r * 1.3)), false, Color(tint.lightened(0.5), (0.75 if down else 0.5) * alpha))
-	draw_arc(c, r, 0, TAU, 48, Color(1, 1, 1, 0.5 * alpha), 2.5, true)
+	r *= 0.92 if down else 1.0
+	draw_circle(c, r, Color(1, 1, 1, 0.3 * alpha) if down else Color(0.02, 0.02, 0.06, 0.32 * alpha), true, -1, true)
+	draw_arc(c, r, 0, TAU, 48, Color(1, 1, 1, 0.75 * alpha), 3.0, true)
+	draw_arc(c, r - 6, 0, TAU, 48, Color(tint, 0.55 * alpha), 2.0, true)
 
 func _draw() -> void:
 	if main == null or main.mode == "results":

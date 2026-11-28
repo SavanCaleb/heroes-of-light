@@ -67,6 +67,15 @@ func _bar(r: Rect2, v: float, c1: Color, c2: Color) -> void:
 		hi.set_corner_radius_all(int(r.size.y / 2))
 		draw_style_box(hi, Rect2(r.position, Vector2(w, r.size.y * 0.55)))
 
+## A slanted bar like in fighting games.
+func _slant(p: Vector2, w: float, h: float, v: float, c1: Color, c2: Color) -> void:
+	var sk := h * 0.6
+	draw_colored_polygon(PackedVector2Array([p + Vector2(sk, -2), p + Vector2(w + sk + 3, -2), p + Vector2(w + 2, h + 2), p + Vector2(-3, h + 2)]), Color(0, 0, 0, 0.55))
+	if v > 0.0:
+		var fw := w * clampf(v, 0, 1)
+		draw_polygon(PackedVector2Array([p + Vector2(sk, 0), p + Vector2(fw + sk, 0), p + Vector2(fw, h), p + Vector2(0, h)]), PackedColorArray([c1, c1, c2, c2]))
+		draw_line(p + Vector2(sk + 1, 1.5), p + Vector2(fw + sk - 1, 1.5), Color(1, 1, 1, 0.45), 2)
+
 func _draw() -> void:
 	hits.clear()
 	var p = main.player
@@ -76,20 +85,27 @@ func _draw() -> void:
 	var vw := vs.x
 	var right_pad := 90.0 if Game.touch else 0.0
 	# --- hero panel ---
-	UI.panel(self, Rect2(16, 14, 380, 118), false, 0.72)
-	UI.text(self, p.def.name, Vector2(32, 46), 26, UI.GOLD)
-	UI.text(self, p.def.title, Vector2(32 + UI.font().get_string_size(p.def.name, 0, -1, 26).x + 12, 46), 17, Color("e8d8ff"))
-	_bar(Rect2(32, 56, 346, 18), p.hp / p.max_hp, Color("ff9aaa"), Color("d8283a"))
-	UI.text(self, "%d / %d" % [int(ceil(p.hp)), int(p.max_hp)], Vector2(32, 71), 14, Color.WHITE, HORIZONTAL_ALIGNMENT_RIGHT, 340, 4)
-	_bar(Rect2(32, 80, 346, 12), p.mp / 100.0, Color("aee0ff"), Color("2a78d8"))
+	# fighting-game style slanted bars, no box
+	var acc := Color(String(p.def.look.get("accent", p.def.look.shirt)))
+	draw_circle(Vector2(44, 52), 26, Color(0, 0, 0, 0.45), true, -1, true)
+	draw_circle(Vector2(44, 52), 22, acc, true, -1, true)
+	draw_circle(Vector2(44, 52), 13, Color("17131f"), true, -1, true)
+	draw_circle(Vector2(48, 50), 2.2, Color.WHITE, true, -1, true)
+	draw_circle(Vector2(54, 50), 2.0, Color.WHITE, true, -1, true)
+	UI.text(self, p.def.name.to_upper(), Vector2(80, 38), 22, Color.WHITE, HORIZONTAL_ALIGNMENT_LEFT, -1, 5)
+	_slant(Vector2(78, 46), 330, 18, p.hp / p.max_hp, Color("ff5a6a"), Color("c01c34"))
+	UI.text(self, str(int(ceil(p.hp))), Vector2(78, 62), 14, Color.WHITE, HORIZONTAL_ALIGNMENT_RIGHT, 322, 4)
+	_slant(Vector2(74, 68), 280, 8, p.mp / 100.0, Color("8ad8ff"), Color("2a78d8"))
 	var full: bool = p.glory >= 100.0
-	_bar(Rect2(32, 98, 346, 14), p.glory / 100.0, Color("fff6c0") if full else Color("ffe27a"), Color("ffb020") if full else Color("e08a10"))
+	for i in 4:
+		var seg := clampf(p.glory / 25.0 - i, 0, 1)
+		_slant(Vector2(70 + i * 62, 82), 56, 10, seg, Color("fff3a0") if full else Color("ffd25a"), Color("ff9a20"))
 	if full:
-		draw_texture_rect(Part.glow_tex(), Rect2(300, 70, 160, 70), false, Color(1, 0.85, 0.4, 0.4 + 0.3 * sin(t * 8.0)))
-	UI.text(self, ("SUPER READY!  " + ("tap SUPER" if Game.touch else "press U")) if full else "SUPER", Vector2(32, 126), 15, Color("fff6c0") if (full and int(t * 4) % 2 == 0) else Color(1, 0.9, 0.6, 0.75), HORIZONTAL_ALIGNMENT_LEFT, -1, 4)
+		draw_texture_rect(Part.glow_tex(), Rect2(40, 50, 320, 70), false, Color(1, 0.85, 0.4, 0.25 + 0.2 * sin(t * 8.0)))
+		UI.text(self, "SUPER READY!", Vector2(320, 94), 15, Color("fff6c0") if int(t * 4) % 2 == 0 else Color("ffb020"), HORIZONTAL_ALIGNMENT_LEFT, -1, 4)
 	var ns: String = main.next_skill_name(p)
 	if ns != "":
-		UI.text(self, "Next skill: " + ns, Vector2(32, 152), 15, Color("c8b8ff"), HORIZONTAL_ALIGNMENT_LEFT, -1, 4)
+		UI.text(self, "Next skill: " + ns, Vector2(72, 116), 14, Color("c8b8ff"), HORIZONTAL_ALIGNMENT_LEFT, -1, 4)
 	# --- coins ---
 	UI.coin_badge(self, Vector2(vw - 190 - right_pad, 14), Game.save.coins + main.coins_n)
 	UI.text(self, "freed " + str(main.freed), Vector2(vw - 186 - right_pad, 86), 17, Color("e8e0ff"))

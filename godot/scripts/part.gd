@@ -15,6 +15,18 @@ var col := Color.WHITE
 var hs := 1.16            # head scale
 
 static var _glow: Texture2D
+## Sleek stickman style: ink figures with a soft rim light and a colored scarf.
+static var STICK := false
+const INK := Color("17131f")
+
+func ink() -> Color:
+	return Color("2a1036") if L("shadow", false) else INK
+
+func rim() -> Color:
+	return Color(1, 0.35, 0.45, 0.35) if L("shadow", false) else Color(1, 1, 1, 0.28)
+
+func accent() -> Color:
+	return Color(String(look.get("accent", look.get("shirt", "#ffffff"))))
 
 static func glow_tex() -> Texture2D:
 	if _glow == null:
@@ -111,14 +123,20 @@ func _draw() -> void:
 		"monkey": _monkey()
 		"butterfly": _butterfly()
 		"aura": glow(Vector2.ZERO, 70, Color("8c3cdc"), 0.28)
+		"backglow": glow(Vector2.ZERO, 62, Color(1, 0.97, 0.9), 0.32)
 		"cape": _cape()
 		"robe": _robe()
 		"halo": _halo()
+		"scarf": _scarf()
 
 func _limb() -> void:
 	draw_set_transform(Vector2.ZERO, 0, Vector2(K, K))
 	var a := Vector2.ZERO
 	var b := Vector2(0, seg)
+	if STICK:
+		var w2 := 3.2 if L("muscle", false) else 2.6
+		cap(a, b, w2, ink())
+		return
 	cap(a, b, wid + 1.7, OL)
 	cap(a, b, wid, col)
 	ln(Vector2(wid * 0.2, 0.4), Vector2(wid * 0.2, seg), Color(0, 0, 0, 0.16), wid * 0.35)
@@ -126,9 +144,12 @@ func _limb() -> void:
 
 func _hand() -> void:
 	draw_set_transform(Vector2.ZERO, 0, Vector2(K, K))
-	circ(Vector2.ZERO, 2.15, OL)
-	circ(Vector2.ZERO, 1.6, C("skin"))
-	circ(Vector2(-0.5, -0.5), 0.6, Color(1, 1, 1, 0.25))
+	if STICK:
+		circ(Vector2.ZERO, 1.75, ink())
+	else:
+		circ(Vector2.ZERO, 2.15, OL)
+		circ(Vector2.ZERO, 1.6, C("skin"))
+		circ(Vector2(-0.5, -0.5), 0.6, Color(1, 1, 1, 0.25))
 	var it = L("item")
 	if it == "cane":
 		ln(Vector2.ZERO, Vector2(1.4, 10), OL, 2.2)
@@ -165,6 +186,9 @@ func _hand() -> void:
 
 func _shoe() -> void:
 	draw_set_transform(Vector2.ZERO, 0, Vector2(K, K))
+	if STICK:
+		draw_colored_polygon(ell_pts(Vector2(1.0, 0.2), 2.5, 1.25), ink())
+		return
 	var p := PackedVector2Array([Vector2(-2.2, -1.9)])
 	p.append_array(quad(Vector2(-2.2, -1.9), Vector2(1, -2.9), Vector2(3.3, -0.5)))
 	p.append_array(quad(Vector2(3.3, -0.5), Vector2(4.8, 1.3), Vector2(2.8, 1.7)))
@@ -184,6 +208,21 @@ func _torso() -> void:
 	var sw: float = d[0]
 	var ww: float = d[1]
 	var TH: float = d[2]
+	if STICK:
+		var tw := 4.4 if L("muscle", false) else 3.5
+		cap(Vector2(0, 0.4), Vector2(0, -TH + 1.2), tw, ink())
+		if L("suit", false):
+			ln(Vector2(0.7, -TH + 1.6), Vector2(0.5, -TH + 6.6), Color("e8463c"), 1.0)
+		if L("coat", false):
+			ln(Vector2(-1.4, -TH + 1.6), Vector2(-2.6, 2.0), Color(1, 1, 1, 0.9), 1.1)
+			ln(Vector2(1.4, -TH + 1.6), Vector2(2.6, 2.0), Color(1, 1, 1, 0.9), 1.1)
+		if L("bib", false):
+			rrect(-1.6, -6.6, 3.6, 3.0, 0.5, Color.WHITE)
+		if L("tie") != null:
+			ln(Vector2(0.6, -TH + 1.6), Vector2(0.5, -3.0), C("tie"), 1.0)
+		if L("shawl") != null:
+			ln(Vector2(-3, -TH + 1.6), Vector2(3, -TH + 2.4), C("shawl"), 2.4)
+		return
 	var top := Color("f4f6fa") if L("coat", false) else C("shirt")
 	var pts := PackedVector2Array([Vector2(-ww, 0.6), Vector2(-sw, -TH + 2.6)])
 	pts.append_array(quad(Vector2(-sw, -TH + 2.6), Vector2(-sw, -TH), Vector2(-sw + 2.4, -TH), 5))
@@ -240,13 +279,16 @@ func _pack() -> void:
 
 func _neck() -> void:
 	draw_set_transform(Vector2.ZERO, 0, Vector2(K, K))
+	if STICK:
+		cap(Vector2.ZERO, Vector2(0, -4.6), 2.4, ink())
+		return
 	cap(Vector2.ZERO, Vector2(0, -4.6), 4.0, OL)
 	cap(Vector2.ZERO, Vector2(0, -4.6), 2.6, shade(C("skin"), -0.12))
 
 func _backhair() -> void:
 	var k := K * hs
 	draw_set_transform(Vector2.ZERO, 0, Vector2(k, k))
-	var hair := C("hair")
+	var hair := ink() if STICK else C("hair")
 	var st = L("style", "none")
 	var p := PackedVector2Array()
 	match st:
@@ -282,19 +324,20 @@ func _backhair() -> void:
 func _head() -> void:
 	var k := K * hs
 	draw_set_transform(Vector2.ZERO, 0, Vector2(k, k))
-	var skin := C("skin")
-	var hair := C("hair")
+	var skin := ink() if STICK else C("skin")
+	var hair := ink() if STICK else C("hair")
 	var st = L("style", "none")
 	var shadow: bool = L("shadow", false)
-	if st != "long" and st != "medium" and not shadow:
+	if st != "long" and st != "medium" and not shadow and not STICK:
 		circ(Vector2(-5.3, 1.2), 1.9, OL)
 		circ(Vector2(-5.3, 1.2), 1.25, shade(skin, -0.12))
-	circ(Vector2.ZERO, 6.9, OL)
+	circ(Vector2.ZERO, 6.9, rim() if STICK else OL)
 	circ(Vector2.ZERO, 6.1, skin)
-	glow(Vector2(-1.6, -2.6), 4.5, Color.WHITE, 0.16)
-	var cres := arc_pts(Vector2.ZERO, 6.1, 0.3, 2.6, 12)
-	cres.append_array(arc_pts(Vector2(0.8, -1), 5.0, 2.6, 0.3, 12))
-	draw_colored_polygon(cres, Color(0, 0, 0, 0.13))
+	if not STICK:
+		glow(Vector2(-1.6, -2.6), 4.5, Color.WHITE, 0.16)
+		var cres := arc_pts(Vector2.ZERO, 6.1, 0.3, 2.6, 12)
+		cres.append_array(arc_pts(Vector2(0.8, -1), 5.0, 2.6, 0.3, 12))
+		draw_colored_polygon(cres, Color(0, 0, 0, 0.13))
 	if st != "none":
 		if st == "curly":
 			for i in range(-2, 3):
@@ -337,6 +380,12 @@ func _head() -> void:
 		var ec := C("eye")
 		draw_colored_polygon(ell_pts(Vector2(1.8, -0.6), 1.5, 1.0, 0.25), ec)
 		draw_colored_polygon(ell_pts(Vector2(4.8, -0.6), 1.3, 1.0, -0.25), ec)
+	elif STICK:
+		var bl2: float = rig.blink if rig else 1.0
+		draw_colored_polygon(ell_pts(Vector2(2.6, -0.4), 0.95, 1.55 * bl2, -0.15), Color(1, 1, 1, 0.96))
+		draw_colored_polygon(ell_pts(Vector2(5.0, -0.4), 0.85, 1.45 * bl2, -0.15), Color(1, 1, 1, 0.96))
+		if rig and rig.mouth_open:
+			draw_colored_polygon(ell_pts(Vector2(4.2, 2.7), 0.9, 0.7), Color(1, 1, 1, 0.8))
 	else:
 		var bl: float = rig.blink if rig else 1.0
 		var ring := Color(0.1, 0.08, 0.19, 0.6)
@@ -372,7 +421,7 @@ func _head() -> void:
 		rrect(0.4, -2.2, 6.4, 2.8, 1, Color(0.24, 0.94, 1.0, 0.8), 0.5)
 		glow(Vector2(3.5, -0.8), 7, Color("3ef0ff"), 0.35)
 	if L("glasses", false):
-		var gc := Color("1a1020")
+		var gc := Color(1, 1, 1, 0.85) if STICK else Color("1a1020")
 		circ(Vector2(2, -0.4), 1.7, Color(0.7, 0.86, 1, 0.25))
 		circ(Vector2(5, -0.4), 1.6, Color(0.7, 0.86, 1, 0.25))
 		draw_arc(Vector2(2, -0.4), 1.7, 0, TAU, 16, gc, 0.6, false)
@@ -380,7 +429,7 @@ func _head() -> void:
 		ln(Vector2(3.6, -0.6), Vector2(3.5, -0.6), gc, 0.6)
 		ln(Vector2(0.4, -0.6), Vector2(-3, -1), gc, 0.5)
 	if L("shades", false):
-		var sc := Color("0b0b12")
+		var sc := Color("cfd8ff") if STICK else Color("0b0b12")
 		rrect(0.3, -2, 3.1, 2.4, 0.9, sc)
 		rrect(3.7, -2, 2.8, 2.4, 0.9, sc)
 		ln(Vector2(3.3, -1.3), Vector2(3.8, -1.3), sc, 0.7)
@@ -447,3 +496,19 @@ func _robe() -> void:
 	shape(p, c, 0.9)
 	draw_colored_polygon(PackedVector2Array([Vector2(-4.6, -1), Vector2(-1.5, -1), Vector2(-2.5 + sw, 8.5), Vector2(-6.0 + sw, 8.5)]), Color(0, 0, 0, 0.15))
 	ln(Vector2(-4.4, 0), Vector2(4.4, 0), shade(c, -0.3), 1.2)
+
+func _scarf() -> void:
+	## A ribbon in the hero's own color that streams behind them as they move.
+	draw_set_transform(Vector2.ZERO, 0, Vector2(K, K))
+	var c := accent()
+	var t := t_now()
+	var sp: float = clampf(absf(rig.vel.x) / 450.0, 0.0, 1.3) if rig else 0.0
+	var up: float = clampf(-rig.vel.y / 900.0, -1.0, 1.0) if rig else 0.0
+	var pts := PackedVector2Array()
+	for i in 13:
+		var f := float(i)
+		pts.append(Vector2(-f * (1.9 + sp * 1.0), f * (0.75 - sp * 0.5 + up * 0.35) + sin(t * 0.32 - f * 0.6) * f * (0.14 + sp * 0.12)))
+	draw_polyline(pts.slice(0, 7), c, 3.2, false)
+	draw_polyline(pts.slice(6), c.darkened(0.08), 2.0, false)
+	circ(Vector2.ZERO, 2.0, c)
+	circ(pts[pts.size() - 1], 1.0, c.darkened(0.08))

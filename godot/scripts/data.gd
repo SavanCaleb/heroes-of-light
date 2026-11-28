@@ -14,7 +14,7 @@ const HEROES := [
 		look={skin="#f6d6bd", hair="#7a4a26", style="medium", shirt="#d8343a", pants="#2d5bd8", shoe="#ffffff", glasses=true, flower=true, butterfly="#4fd0ff"}},
 	{id="shalom", name="Shalom", title="The Techie", hp=110, dbl=true, spd=2.6, jmp=8.3,
 		s1="Laser Bot 3000", s2="Firewall Bubble", sup="System Reboot",
-		look={skin="#4a2a18", hair="#141414", style="curly", shirt="#2c3e50", pants="#1c2833", shoe="#3ef0ff", visor=true}},
+		look={skin="#4a2a18", hair="#141414", style="curly", shirt="#2c3e50", pants="#1c2833", shoe="#3ef0ff", visor=true, accent="#3ef0ff"}},
 	{id="zion", name="Zion", title="The Tower", hp=110, dbl=true, spd=2.6, jmp=8.3,
 		s1="Thunder Stomp", s2="Hype Train", sup="Tower Quake",
 		look={skin="#4a2a18", hair="#1a0f08", style="dreads", shirt="#f2c230", pants="#1a1a1a", shoe="#d8343a", glasses=true, scale=1.12}},
@@ -26,10 +26,10 @@ const HEROES := [
 		look={skin="#4a2a18", hair="#111111", style="short", shirt="#e8463c", pants="#1c2833", shoe="#ffffff", bib=true, band="#ffffff", muscle=true, scale=0.93}},
 	{id="edikan", name="Edikan", title="The Youth Leader", hp=110, dbl=true, spd=2.6, jmp=8.3,
 		s1="Hallelujah Blast", s2="Doctor's Orders", sup="Revival Fire",
-		look={skin="#5a3420", hair="#140c08", style="long", shirt="#9b5bff", pants="#2a2a3a", shoe="#333333", coat=true}},
+		look={skin="#5a3420", hair="#140c08", style="long", shirt="#9b5bff", pants="#2a2a3a", shoe="#333333", coat=true, accent="#b07aff"}},
 	{id="savan", name="Savan", title="The Agent", hp=110, dbl=true, spd=2.6, jmp=8.3,
 		s1="Spirit Blade", s2="Full Armor Mode", sup="Code Name: Glory",
-		look={skin="#a8714a", hair="#0e0e12", style="straight", shirt="#17171f", pants="#17171f", shoe="#050508", suit=true, shades=true}},
+		look={skin="#a8714a", hair="#0e0e12", style="straight", shirt="#17171f", pants="#17171f", shoe="#050508", suit=true, shades=true, accent="#ffd25a"}},
 ]
 
 const NPCS := {

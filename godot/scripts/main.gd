@@ -114,6 +114,8 @@ func _ready() -> void:
 		extra.halo = true
 	player = Fighter.new()
 	player.setup(self, Game.hero_def(), false, "hero", "hero", extra)
+	if "atbattle" in OS.get_cmdline_user_args() and zones.size() > 0:
+		respawn = Vector2(zones[0].x + 100, 300)
 	if "atboss" in OS.get_cmdline_user_args() and arena:
 		respawn = Vector2(arena.x + 120, 300)
 	if "glory" in OS.get_cmdline_user_args():
@@ -431,7 +433,17 @@ func _world_checks() -> void:
 			Game.music("battle")
 			shake = 8.0
 			_next_wave(z)
-		elif z.active and foe_count() == 0:
+		elif z.active:
+			z.t = z.get("t", 0.0) + get_physics_process_delta_time()
+			if z.t > 20.0 and _wave_left() > 0:
+				# safety net: bring any shadow that got stuck somewhere back to the fight
+				z.t = 0.0
+				for f in foes:
+					if is_instance_valid(f) and not f.dead and f.has_meta("wave"):
+						f.position = Vector2(_ground_x(player.position.x + randf_range(-200, 200)), 120)
+						f.velocity = Vector2.ZERO
+		if z.active and _wave_left() == 0:
+			z.t = 0.0
 			if z.wave + 1 < L.waves.size():
 				_next_wave(z)
 			else:
@@ -446,6 +458,10 @@ func _world_checks() -> void:
 		_lock(arena.x, arena.x + vw)
 		var talk: Array = L.get("boss_talk", [])
 		say(talk, _spawn_boss)
+	# shadows that fall out of the world are gone, so they can't keep a BATTLE zone locked
+	for f in foes.duplicate():
+		if is_instance_valid(f) and not f.dead and f.position.y > Data.ROWS * T + 100:
+			on_defeat(f)
 	if player.position.y > Data.ROWS * T + 120:
 		falls += 1
 		player.hp -= 25.0
@@ -466,8 +482,27 @@ func _next_wave(z: Dictionary) -> void:
 	for i in list.size():
 		var side := i % 2
 		var x: float = lock.l + (120 if side == 0 else get_viewport_rect().size.x - 120) + randf_range(-40, 40)
-		var f = spawn_foe(list[i], Vector2(x, 120))
+		var f = spawn_foe(list[i], Vector2(_ground_x(x), 120))
 		f.velocity.y = 200
+		f.set_meta("wave", true)
+
+## Shadows from the current BATTLE wave that are still standing (other shadows in the land don't count).
+func _wave_left() -> int:
+	var n := 0
+	for f in foes:
+		if is_instance_valid(f) and not f.dead and f.has_meta("wave"):
+			n += 1
+	return n
+
+## Nearest x (moving toward the middle of the locked area) that has solid ground under it.
+func _ground_x(x: float) -> float:
+	var mid: float = (lock.l + lock.r) / 2.0 if lock else x
+	var step := 24.0 if x < mid else -24.0
+	for i in 80:
+		if level.ground_below(x, 100) < Data.ROWS * T:
+			return x
+		x += step
+	return mid
 
 func _lock(l: float, r: float) -> void:
 	lock = {l=l, r=r}
