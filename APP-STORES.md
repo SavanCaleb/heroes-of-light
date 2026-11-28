@@ -8,9 +8,9 @@ Open **https://savancaleb.github.io/heroes-of-light/next/** in Safari (iPhone) o
 
 ## 2. Android test app (APK)
 
-The test app is built at `apps/HeroesOfLight-android-test.apk` on Savan's PC (it is not stored on GitHub because it is 74 MB).
+Download it on the phone: **https://github.com/SavanCaleb/heroes-of-light/releases/download/v1.0-test/HeroesOfLight-android-test.apk** (74 MB, Android 7 or newer). It is also built at `apps/HeroesOfLight-android-test.apk` on Savan's PC.
 
-1. Copy the file to the Android phone (USB cable, Google Drive or email to yourself).
+1. Open the download link on the Android phone (or copy the file over).
 2. Open it on the phone. Android asks to allow installing apps from that source: allow it once.
 3. Tap Install. Heroes of Light appears with the sword-hero icon.
 

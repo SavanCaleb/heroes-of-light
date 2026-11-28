@@ -15,6 +15,14 @@ Open `index.html` in a browser, or play the GitHub Pages version of this reposit
 
 The game gets its own icon, opens full screen in landscape, and works with no internet after the first visit.
 
+## New version (Godot)
+
+Seven Bible-story adventures with music and touch controls:
+
+- **Play in the browser (iPhone and Android):** https://savancaleb.github.io/heroes-of-light/next/
+- **Android app (test build):** https://github.com/SavanCaleb/heroes-of-light/releases/download/v1.0-test/HeroesOfLight-android-test.apk
+- App store steps: see APP-STORES.md
+
 ## Controls
 
 | Action  | Keyboard         | Phone       |
