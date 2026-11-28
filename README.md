@@ -8,7 +8,12 @@ Eight friends cross five lands, meet friends from church along the way, and defe
 
 Open `index.html` in a browser, or play the GitHub Pages version of this repository.
 
-On iPhone, open the link in Safari and turn the phone sideways. For full screen, tap Share, then "Add to Home Screen".
+### Install it like an app
+
+- **iPhone:** open the link in Safari, tap Share, then "Add to Home Screen".
+- **Android:** open the link in Chrome, tap the menu (three dots), then "Install app".
+
+The game gets its own icon, opens full screen in landscape, and works with no internet after the first visit.
 
 ## Controls
 
@@ -22,4 +27,4 @@ On iPhone, open the link in Safari and turn the phone sideways. For full screen,
 | SUPER   | U or Shift       | SUPER       |
 | Pause   | Esc / P          | II          |
 
-The whole game is one file, `index.html`, with no build step.
+The whole game is one file, `index.html`, with no build step. `manifest.webmanifest`, `sw.js` and `icons/` make it installable and playable offline.
